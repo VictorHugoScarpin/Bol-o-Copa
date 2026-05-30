@@ -1,15 +1,9 @@
-// scripts/sync-data.js
-// Roda via GitHub Actions — sincroniza dados da API Football com Supabase
-// API: api-football.com (plano gratuito: 100 req/dia)
-// Copa do Mundo 2026: League ID = 1 (verificar em api-football.com)
-
-const { createClient } = require('@supabase/supabase-js')
+import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 const FOOTBALL_API_KEY = process.env.FOOTBALL_API_KEY
 
-// Copa do Mundo FIFA 2026 — confirme o ID em: https://api-football.com/documentation-v3
 const LEAGUE_ID = 1
 const SEASON = 2026
 
@@ -24,7 +18,10 @@ const FLAG_MAP = {
   'Australia': '🇦🇺', 'Saudi Arabia': '🇸🇦', 'Iran': '🇮🇷', 'Qatar': '🇶🇦',
   'Croatia': '🇭🇷', 'Serbia': '🇷🇸', 'Switzerland': '🇨🇭', 'Belgium': '🇧🇪',
   'Denmark': '🇩🇰', 'Poland': '🇵🇱', 'Cameroon': '🇨🇲', 'Ecuador': '🇪🇨',
-  'Tunisia': '🇹🇳', 'Costa Rica': '🇨🇷', 'Wales': '🏴󠁧󠁢󠁷󠁬󠁳󠁿', 'Iran': '🇮🇷',
+  'Tunisia': '🇹🇳', 'Costa Rica': '🇨🇷', 'Wales': '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+  'Chile': '🇨🇱', 'Peru': '🇵🇪', 'Paraguay': '🇵🇾', 'Venezuela': '🇻🇪',
+  'Bolivia': '🇧🇴', 'Austria': '🇦🇹', 'Turkey': '🇹🇷', 'Ukraine': '🇺🇦',
+  'Mexico': '🇲🇽', 'Honduras': '🇭🇳', 'Panama': '🇵🇦', 'Jamaica': '🇯🇲',
 }
 
 async function apiRequest(endpoint) {
@@ -54,9 +51,7 @@ function mapStage(round) {
 
 async function syncMatches() {
   console.log('📅 Sincronizando jogos...')
-  const fixtures = await apiRequest(
-    `/fixtures?league=${LEAGUE_ID}&season=${SEASON}`
-  )
+  const fixtures = await apiRequest(`/fixtures?league=${LEAGUE_ID}&season=${SEASON}`)
 
   for (const fixture of fixtures) {
     const f = fixture.fixture
@@ -66,7 +61,7 @@ async function syncMatches() {
     const s = fixture.fixture.status.short
 
     const stage = mapStage(fixture.league.round)
-    const groupMatch = fixture.league.round?.match(/Group ([A-H])/i)
+    const groupMatch = fixture.league.round?.match(/Group ([A-Z])/i)
     const groupName = groupMatch ? groupMatch[1].toUpperCase() : null
 
     let status = 'upcoming'
@@ -85,17 +80,15 @@ async function syncMatches() {
       stage,
       group_name: groupName,
       status,
-      stream_url: 'https://www.youtube.com/@CazéTV', // CazéTV transmite a Copa
+      stream_url: 'https://www.youtube.com/@CazéTV',
     }, { onConflict: 'external_id' })
   }
   console.log(`✅ ${fixtures.length} jogos sincronizados`)
 }
 
 async function syncStandings() {
-  console.log('📊 Sincronizando classificação dos grupos...')
-  const standings = await apiRequest(
-    `/standings?league=${LEAGUE_ID}&season=${SEASON}`
-  )
+  console.log('📊 Sincronizando grupos...')
+  const standings = await apiRequest(`/standings?league=${LEAGUE_ID}&season=${SEASON}`)
 
   const rows = []
   for (const league of standings) {
@@ -119,17 +112,14 @@ async function syncStandings() {
     }
   }
 
-  // Limpa e re-insere
   await supabase.from('group_standings').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  await supabase.from('group_standings').insert(rows)
-  console.log(`✅ ${rows.length} posições de grupo sincronizadas`)
+  if (rows.length > 0) await supabase.from('group_standings').insert(rows)
+  console.log(`✅ ${rows.length} times sincronizados`)
 }
 
 async function syncTopScorers() {
   console.log('⚽ Sincronizando artilheiros...')
-  const scorers = await apiRequest(
-    `/players/topscorers?league=${LEAGUE_ID}&season=${SEASON}`
-  )
+  const scorers = await apiRequest(`/players/topscorers?league=${LEAGUE_ID}&season=${SEASON}`)
 
   const rows = scorers.slice(0, 10).map(p => ({
     player_name: p.player.name,
@@ -141,15 +131,13 @@ async function syncTopScorers() {
   }))
 
   await supabase.from('top_scorers').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  await supabase.from('top_scorers').insert(rows)
+  if (rows.length > 0) await supabase.from('top_scorers').insert(rows)
   console.log(`✅ ${rows.length} artilheiros sincronizados`)
 }
 
 async function syncTopAssists() {
   console.log('👟 Sincronizando assistências...')
-  const assists = await apiRequest(
-    `/players/topassists?league=${LEAGUE_ID}&season=${SEASON}`
-  )
+  const assists = await apiRequest(`/players/topassists?league=${LEAGUE_ID}&season=${SEASON}`)
 
   const rows = assists.slice(0, 10).map(p => ({
     player_name: p.player.name,
@@ -161,7 +149,7 @@ async function syncTopAssists() {
   }))
 
   await supabase.from('top_assists').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  await supabase.from('top_assists').insert(rows)
+  if (rows.length > 0) await supabase.from('top_assists').insert(rows)
   console.log(`✅ ${rows.length} assistências sincronizadas`)
 }
 
@@ -173,7 +161,7 @@ async function main() {
     await syncTopAssists()
     console.log('🏆 Sync completo!')
   } catch (err) {
-    console.error('❌ Erro no sync:', err)
+    console.error('❌ Erro:', err.message)
     process.exit(1)
   }
 }
