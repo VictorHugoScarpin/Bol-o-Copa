@@ -34,8 +34,17 @@ export function AuthProvider({ children }) {
     setLoading(false)
   }
 
+  function makeEmail(nick) {
+    const safe = nick
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '')
+    return `${safe}@bolao.copa`
+  }
+
   async function signIn(nick, password) {
-    const fakeEmail = `${nick.toLowerCase().replace(/\s+/g, '')}@bolao.copa`
+    const fakeEmail = makeEmail(nick)
     const { error } = await supabase.auth.signInWithPassword({
       email: fakeEmail,
       password,
@@ -44,7 +53,7 @@ export function AuthProvider({ children }) {
   }
 
   async function signUp(nick, password) {
-    const fakeEmail = `${nick.toLowerCase().replace(/\s+/g, '')}@bolao.copa`
+    const fakeEmail = makeEmail(nick)
     const { data, error } = await supabase.auth.signUp({
       email: fakeEmail,
       password,
