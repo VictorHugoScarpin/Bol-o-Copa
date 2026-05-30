@@ -37,7 +37,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '36px' }}>
           <img
-            src="/copa2026.png"
+            src="https://upload.wikimedia.org/wikipedia/en/thumb/5/5c/2026_FIFA_World_Cup_emblem.svg/800px-2026_FIFA_World_Cup_emblem.svg.png"
             alt="Copa do Mundo 2026"
             style={{ width: '120px', marginBottom: '20px', filter: 'drop-shadow(0 0 32px rgba(201,168,76,0.5)) drop-shadow(0 0 64px rgba(201,168,76,0.2))' }}
             onError={e => { e.target.style.display='none' }}
