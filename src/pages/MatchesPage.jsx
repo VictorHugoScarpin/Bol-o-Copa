@@ -63,7 +63,6 @@ function FlagBg({ name, emoji, side }) {
 function MatchCard({ match }) {
   const finished = match.status === 'finished'
   const live = match.status === 'live'
-
   return (
     <div style={{ position: 'relative', background: live ? 'rgba(239,68,68,0.06)' : 'var(--bg-glass)', border: `1px solid ${live ? 'rgba(239,68,68,0.3)' : 'var(--border-glass)'}`, borderRadius: 'var(--radius-lg)', overflow: 'hidden', padding: '14px 16px' }}>
       <FlagBg name={match.home_team} emoji={match.home_flag} side="left" />
@@ -100,9 +99,62 @@ function MatchCard({ match }) {
   )
 }
 
+function StatsTab() {
+  const [scorers, setScorers] = useState([])
+  const [assists, setAssists] = useState([])
+  const [statsTab, setStatsTab] = useState('scorers')
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    Promise.all([
+      supabase.from('top_scorers').select('*').order('goals', { ascending: false }).limit(10),
+      supabase.from('top_assists').select('*').order('assists', { ascending: false }).limit(10),
+    ]).then(([s, a]) => {
+      setScorers(s.data || [])
+      setAssists(a.data || [])
+      setLoading(false)
+    })
+  }, [])
+
+  const data = statsTab === 'scorers' ? scorers : assists
+  const key = statsTab === 'scorers' ? 'goals' : 'assists'
+  const label = statsTab === 'scorers' ? 'gols' : 'assist.'
+  const MEDALS = ['🥇', '🥈', '🥉']
+
+  return (
+    <div>
+      <div style={{ display: 'flex', background: 'var(--bg-glass)', borderRadius: 'var(--radius-md)', padding: '4px', marginBottom: '16px' }}>
+        {[['scorers', '⚽ Artilheiros'], ['assists', '👟 Assistências']].map(([k, l]) => (
+          <button key={k} onClick={() => setStatsTab(k)} style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600, background: statsTab === k ? 'rgba(255,255,255,0.1)' : 'transparent', color: statsTab === k ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+            {l}
+          </button>
+        ))}
+      </div>
+      {loading ? Array.from({length:5}).map((_,i) => <div key={i} className="skeleton" style={{height:52,marginBottom:8,borderRadius:10}} />) :
+        data.length === 0 ? <div style={{textAlign:'center',color:'var(--text-muted)',padding:'40px 0',fontSize:'14px'}}>Disponível após o início da Copa.</div> :
+        data.map((p, i) => (
+          <div key={p.id} className="glass-card" style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+            <div style={{ width: 24, textAlign: 'center', fontFamily: 'var(--font-display)', fontSize: '16px', color: i < 3 ? 'var(--accent-gold)' : 'var(--text-muted)', flexShrink: 0 }}>{i < 3 ? MEDALS[i] : `${i+1}º`}</div>
+            {p.photo_url ? <img src={p.photo_url} alt="" style={{width:36,height:36,borderRadius:'50%',objectFit:'cover',flexShrink:0}} /> : <div style={{width:36,height:36,borderRadius:'50%',background:'var(--bg-glass)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{p.flag_emoji||'⚽'}</div>}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '14px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.player_name}</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{p.flag_emoji} {p.team_name}</div>
+            </div>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: '22px', color: 'var(--text-primary)', letterSpacing: '0.04em', lineHeight: 1 }}>{p[key]}</div>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{label}</div>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  )
+}
+
 export default function MatchesPage() {
   const [matches, setMatches] = useState([])
   const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState('jogos')
 
   useEffect(() => {
     supabase.from('matches').select('*').order('match_date').then(({ data }) => {
@@ -121,7 +173,18 @@ export default function MatchesPage() {
   return (
     <div className="page">
       <div className="section-title">Jogos</div>
-      {loading ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton" style={{ height: 140, marginBottom: 12 }} />) :
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', background: 'var(--bg-glass)', borderRadius: 'var(--radius-md)', padding: '4px', marginBottom: '16px', gap: '4px' }}>
+        {[['jogos', '📅 Jogos'], ['stats', '⚽ Artilheiros']].map(([key, label]) => (
+          <button key={key} onClick={() => setTab(key)} style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600, transition: 'all 0.2s', background: tab === key ? 'rgba(255,255,255,0.1)' : 'transparent', color: tab === key ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'stats' ? <StatsTab /> : (
+        loading ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton" style={{ height: 140, marginBottom: 12 }} />) :
         matches.length === 0 ? <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '60px 0' }}>Nenhum jogo cadastrado ainda.</div> :
         Object.entries(grouped).map(([date, dayMatches]) => (
           <div key={date}>
@@ -131,7 +194,7 @@ export default function MatchesPage() {
             </div>
           </div>
         ))
-      }
+      )}
     </div>
   )
 }

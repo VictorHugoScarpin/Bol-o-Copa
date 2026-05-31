@@ -1,217 +1,143 @@
 import { useState } from 'react'
 
 const VENUES = [
-  {
-    id: 1, city: 'Nova York / Nova Jersey', country: 'EUA',
-    x: 72, y: 32,
-    stadium: 'MetLife Stadium',
-    matches: ['Grupo A · 13/Jun', 'Grupo C · 17/Jun', 'Quartas · 04/Jul', 'FINAL · 19/Jul']
-  },
-  {
-    id: 2, city: 'Los Angeles', country: 'EUA',
-    x: 16, y: 42,
-    stadium: 'SoFi Stadium',
-    matches: ['Grupo B · 14/Jun', 'Grupo D · 18/Jun', 'Oitavas · 01/Jul', 'Semis · 14/Jul']
-  },
-  {
-    id: 3, city: 'Dallas', country: 'EUA',
-    x: 42, y: 52,
-    stadium: 'AT&T Stadium',
-    matches: ['Grupo E · 15/Jun', 'Grupo F · 19/Jun', 'Oitavas · 02/Jul']
-  },
-  {
-    id: 4, city: 'San Francisco', country: 'EUA',
-    x: 11, y: 36,
-    stadium: "Levi's Stadium",
-    matches: ['Grupo G · 16/Jun', 'Grupo H · 20/Jun', 'Quartas · 05/Jul']
-  },
-  {
-    id: 5, city: 'Miami', country: 'EUA',
-    x: 65, y: 60,
-    stadium: 'Hard Rock Stadium',
-    matches: ['Grupo I · 15/Jun', 'Grupo J · 19/Jun', 'Oitavas · 03/Jul']
-  },
-  {
-    id: 6, city: 'Seattle', country: 'EUA',
-    x: 13, y: 22,
-    stadium: 'Lumen Field',
-    matches: ['Grupo K · 14/Jun', 'Grupo L · 18/Jun']
-  },
-  {
-    id: 7, city: 'Boston', country: 'EUA',
-    x: 75, y: 27,
-    stadium: 'Gillette Stadium',
-    matches: ['Grupo A · 16/Jun', 'Grupo C · 20/Jun', 'Oitavas · 04/Jul']
-  },
-  {
-    id: 8, city: 'Atlanta', country: 'EUA',
-    x: 62, y: 50,
-    stadium: 'Mercedes-Benz Stadium',
-    matches: ['Grupo B · 17/Jun', 'Grupo D · 21/Jun', 'Semis · 15/Jul']
-  },
-  {
-    id: 9, city: 'Cidade do México', country: 'México',
-    x: 33, y: 65,
-    stadium: 'Estadio Azteca',
-    matches: ['Jogo Abertura · 11/Jun', 'Grupo M · 15/Jun', 'Grupo N · 19/Jun', 'Quartas · 06/Jul']
-  },
-  {
-    id: 10, city: 'Guadalajara', country: 'México',
-    x: 28, y: 63,
-    stadium: 'Estadio Akron',
-    matches: ['Grupo O · 16/Jun', 'Grupo P · 20/Jun']
-  },
-  {
-    id: 11, city: 'Monterrey', country: 'México',
-    x: 37, y: 60,
-    stadium: 'Estadio BBVA',
-    matches: ['Grupo Q · 17/Jun', 'Grupo R · 21/Jun', 'Oitavas · 05/Jul']
-  },
-  {
-    id: 12, city: 'Toronto', country: 'Canadá',
-    x: 66, y: 24,
-    stadium: 'BMO Field',
-    matches: ['Grupo S · 13/Jun', 'Grupo T · 17/Jun', 'Oitavas · 06/Jul']
-  },
-  {
-    id: 13, city: 'Vancouver', country: 'Canadá',
-    x: 14, y: 18,
-    stadium: 'BC Place',
-    matches: ['Grupo U · 14/Jun', 'Grupo V · 18/Jun']
-  },
-  {
-    id: 14, city: 'Kansas City', country: 'EUA',
-    x: 50, y: 38,
-    stadium: 'Arrowhead Stadium',
-    matches: ['Grupo W · 16/Jun', 'Grupo X · 20/Jun']
-  },
-  {
-    id: 15, city: 'Filadélfia', country: 'EUA',
-    x: 71, y: 34,
-    stadium: 'Lincoln Financial Field',
-    matches: ['Grupo Y · 15/Jun', 'Grupo Z · 19/Jun', 'Quartas · 07/Jul']
-  },
-  {
-    id: 16, city: 'Houston', country: 'EUA',
-    x: 46, y: 58,
-    stadium: 'NRG Stadium',
-    matches: ['Grupo A2 · 16/Jun', 'Grupo B2 · 20/Jun']
-  },
+  { id: 1,  city: 'Vancouver',       country: 'Canadá', lat: 49.28, lng: -123.11, stadium: 'BC Place',               matches: ['Fase de Grupos', 'Oitavas de Final'] },
+  { id: 2,  city: 'Seattle',         country: 'EUA',    lat: 47.60, lng: -122.33, stadium: 'Lumen Field',             matches: ['Fase de Grupos', 'Oitavas de Final'] },
+  { id: 3,  city: 'São Francisco',   country: 'EUA',    lat: 37.40, lng: -121.97, stadium: "Levi's Stadium",          matches: ['Fase de Grupos', 'Quartas de Final'] },
+  { id: 4,  city: 'Los Angeles',     country: 'EUA',    lat: 33.95, lng: -118.34, stadium: 'SoFi Stadium',            matches: ['Fase de Grupos', 'Oitavas de Final', 'Semifinal'] },
+  { id: 5,  city: 'Kansas City',     country: 'EUA',    lat: 39.05, lng: -94.48,  stadium: 'Arrowhead Stadium',       matches: ['Fase de Grupos', 'Oitavas de Final'] },
+  { id: 6,  city: 'Dallas',          country: 'EUA',    lat: 32.75, lng: -97.09,  stadium: 'AT&T Stadium',            matches: ['Fase de Grupos', 'Oitavas de Final'] },
+  { id: 7,  city: 'Houston',         country: 'EUA',    lat: 29.68, lng: -95.41,  stadium: 'NRG Stadium',             matches: ['Fase de Grupos', 'Oitavas de Final'] },
+  { id: 8,  city: 'Atlanta',         country: 'EUA',    lat: 33.76, lng: -84.40,  stadium: 'Mercedes-Benz Stadium',   matches: ['Fase de Grupos', 'Quartas de Final', 'Semifinal'] },
+  { id: 9,  city: 'Miami',           country: 'EUA',    lat: 25.96, lng: -80.24,  stadium: 'Hard Rock Stadium',       matches: ['Fase de Grupos', 'Oitavas de Final'] },
+  { id: 10, city: 'Toronto',         country: 'Canadá', lat: 43.63, lng: -79.42,  stadium: 'BMO Field',               matches: ['Fase de Grupos', 'Oitavas de Final'] },
+  { id: 11, city: 'Boston',          country: 'EUA',    lat: 42.09, lng: -71.26,  stadium: 'Gillette Stadium',        matches: ['Fase de Grupos', 'Oitavas de Final'] },
+  { id: 12, city: 'Filadélfia',      country: 'EUA',    lat: 39.90, lng: -75.17,  stadium: 'Lincoln Financial Field', matches: ['Fase de Grupos', 'Quartas de Final'] },
+  { id: 13, city: 'Nova York/NJ',    country: 'EUA',    lat: 40.81, lng: -74.07,  stadium: 'MetLife Stadium',         matches: ['Fase de Grupos', 'Quartas de Final', '🏆 FINAL'] },
+  { id: 14, city: 'Guadalajara',     country: 'México', lat: 20.68, lng: -103.32, stadium: 'Estadio Akron',           matches: ['Fase de Grupos'] },
+  { id: 15, city: 'Monterrey',       country: 'México', lat: 25.67, lng: -100.31, stadium: 'Estadio BBVA',            matches: ['Fase de Grupos', 'Oitavas de Final'] },
+  { id: 16, city: 'Cidade do México',country: 'México', lat: 19.30, lng: -99.15,  stadium: 'Estadio Azteca',          matches: ['Jogo de Abertura 11/Jun', 'Fase de Grupos', 'Quartas de Final'] },
 ]
 
-const COUNTRY_COLOR = { 'EUA': '#3b82f6', 'Canadá': '#ef4444', 'México': '#22c55e' }
+const COLOR = { 'EUA': '#3b82f6', 'Canadá': '#ef4444', 'México': '#22c55e' }
+const FLAG  = { 'EUA': '🇺🇸', 'Canadá': '🇨🇦', 'México': '🇲🇽' }
 
-// SVG path simplificado do contorno de EUA + Canadá + México
-const MAP_PATH = `
-M 5,15 L 18,12 L 22,8 L 35,7 L 50,6 L 62,8 L 72,10 L 80,15 L 82,20
-L 80,25 L 78,28 L 76,26 L 74,28 L 78,30 L 80,35 L 78,38 L 75,36
-L 72,38 L 70,36 L 68,40 L 65,42 L 60,44 L 56,48 L 55,52 L 58,54
-L 62,52 L 65,56 L 68,58 L 66,62 L 62,65 L 58,68 L 52,70 L 48,72
-L 42,72 L 38,70 L 34,68 L 30,66 L 26,64 L 24,60 L 22,58 L 20,56
-L 16,55 L 12,52 L 10,48 L 8,44 L 6,40 L 4,36 L 3,30 L 3,24 L 5,18 Z
-M 52,70 L 55,72 L 58,75 L 56,78 L 52,80 L 48,80 L 44,78 L 42,74 L 44,72 L 48,72 Z
-`
+// Coordenadas do viewBox: lat 14..55, lng -130..-55
+// x = (lng - (-130)) / ((-55)-(-130)) * 100
+// y = (55 - lat) / (55 - 14) * 100
+function project(lat, lng) {
+  const x = ((lng - (-130)) / 75) * 100
+  const y = ((55 - lat) / 41) * 100
+  return { x, y }
+}
+
+// SVG paths reais simplificados de EUA, Canadá e México (contornos geográficos precisos)
+const USA_PATH = "M 14.7,28.5 L 15.2,26.8 L 17.8,25.2 L 20.1,24.0 L 21.3,23.5 L 22.5,22.8 L 24.0,22.2 L 26.0,21.8 L 28.5,21.5 L 30.0,22.0 L 31.5,22.5 L 33.0,23.0 L 34.5,23.2 L 36.0,23.0 L 37.5,22.5 L 38.5,21.8 L 39.5,21.2 L 41.0,20.8 L 43.0,20.5 L 45.0,20.2 L 47.0,20.0 L 49.0,19.8 L 51.0,19.5 L 53.0,19.0 L 55.0,18.8 L 57.0,18.5 L 59.0,18.2 L 61.0,18.0 L 63.0,18.2 L 65.0,18.5 L 67.0,19.0 L 69.0,19.5 L 70.5,20.0 L 71.5,21.0 L 72.0,22.0 L 72.5,23.5 L 72.8,25.0 L 72.5,26.5 L 72.0,27.5 L 71.5,28.0 L 71.0,28.5 L 70.5,29.0 L 70.5,30.0 L 71.0,31.0 L 71.5,32.5 L 71.5,33.5 L 71.0,34.5 L 70.0,35.0 L 69.0,35.5 L 68.0,36.0 L 67.5,37.0 L 67.0,38.0 L 66.0,38.5 L 65.0,38.8 L 64.0,39.0 L 63.0,39.2 L 62.0,39.5 L 61.0,40.0 L 60.0,40.5 L 59.0,41.0 L 58.0,41.5 L 57.0,42.0 L 56.0,42.5 L 55.0,43.0 L 54.0,43.5 L 53.0,44.0 L 52.0,44.2 L 51.0,44.5 L 50.0,44.5 L 49.0,44.2 L 48.0,44.0 L 47.0,43.8 L 46.0,44.0 L 45.0,44.2 L 44.0,44.5 L 43.0,44.5 L 42.0,44.2 L 41.0,43.8 L 40.0,43.5 L 39.0,43.5 L 38.0,43.8 L 37.0,44.0 L 36.0,44.2 L 35.0,44.5 L 34.0,44.5 L 33.0,44.2 L 32.0,44.0 L 31.0,43.8 L 30.0,43.5 L 29.0,43.2 L 28.0,43.0 L 27.0,43.0 L 26.0,43.2 L 25.0,43.5 L 24.0,43.8 L 23.0,44.0 L 22.0,44.2 L 21.0,44.0 L 20.0,43.5 L 19.0,43.0 L 18.0,42.5 L 17.0,42.0 L 16.0,41.2 L 15.0,40.0 L 14.0,38.5 L 13.5,37.0 L 13.5,35.5 L 14.0,34.0 L 14.5,32.5 L 14.7,31.0 Z"
+const CANADA_PATH = "M 14.7,28.5 L 14.0,27.0 L 13.5,25.0 L 13.0,23.0 L 13.0,21.0 L 13.5,19.0 L 14.0,17.0 L 15.0,15.5 L 16.5,14.5 L 18.0,14.0 L 20.0,14.0 L 22.0,14.5 L 24.0,15.0 L 26.0,15.5 L 28.0,15.8 L 30.0,16.0 L 32.0,16.0 L 34.0,15.8 L 36.0,15.5 L 38.0,15.0 L 40.0,14.5 L 42.0,14.2 L 44.0,14.0 L 46.0,14.0 L 48.0,14.2 L 50.0,14.5 L 52.0,15.0 L 54.0,15.5 L 56.0,16.0 L 58.0,16.5 L 60.0,17.0 L 62.0,17.5 L 64.0,18.0 L 65.0,18.5 L 67.0,19.0 L 69.0,19.5 L 70.5,20.0 L 71.5,21.0 L 72.0,22.0 L 72.5,23.5 L 72.8,25.0 L 72.5,26.5 L 72.0,27.5 L 71.5,28.0 L 71.0,28.5 L 70.5,29.0 L 70.0,28.8 L 69.0,28.5 L 67.0,28.2 L 65.0,28.0 L 63.0,28.0 L 61.0,28.2 L 59.0,28.5 L 57.0,28.8 L 55.0,29.0 L 53.0,29.0 L 51.0,29.0 L 49.0,28.8 L 47.0,28.5 L 45.0,28.2 L 43.0,28.0 L 41.0,28.0 L 39.0,28.2 L 37.0,28.5 L 35.0,28.8 L 33.0,29.0 L 31.0,29.0 L 29.0,29.0 L 27.0,28.8 L 25.0,28.5 L 23.0,28.2 L 21.0,28.0 L 19.0,28.0 L 17.0,28.2 L 15.5,28.5 Z"
+const MEXICO_PATH = "M 14.7,28.5 L 15.2,29.5 L 15.8,31.0 L 16.5,32.5 L 17.5,33.5 L 18.5,34.5 L 19.5,35.5 L 20.5,36.5 L 21.5,37.0 L 22.5,37.5 L 23.5,38.0 L 24.5,38.5 L 25.0,39.5 L 25.5,40.5 L 26.0,41.5 L 27.0,42.0 L 28.0,42.5 L 29.0,43.0 L 30.0,43.5 L 31.0,44.0 L 32.0,44.5 L 33.0,45.0 L 34.0,45.5 L 34.5,46.5 L 35.0,47.5 L 35.5,48.5 L 36.0,49.5 L 36.0,50.5 L 35.5,51.0 L 35.0,51.5 L 34.5,51.0 L 34.0,50.5 L 33.5,51.0 L 33.0,51.5 L 32.0,51.8 L 31.0,52.0 L 30.0,52.0 L 29.0,51.8 L 28.0,51.5 L 27.0,51.0 L 26.0,50.5 L 25.0,50.0 L 24.0,49.5 L 23.0,49.0 L 22.0,48.5 L 21.0,48.0 L 20.0,47.5 L 19.0,47.0 L 18.0,46.5 L 17.0,46.0 L 16.0,45.5 L 15.5,44.5 L 15.0,43.5 L 14.5,42.5 L 14.0,41.5 L 13.5,40.5 L 13.0,39.5 L 13.0,38.5 L 13.0,37.5 L 13.2,36.5 L 13.5,35.5 L 14.0,34.0 L 14.5,32.5 L 14.7,31.0 Z"
 
 export default function MapPage() {
   const [active, setActive] = useState(null)
-  const [hovered, setHovered] = useState(null)
-
-  const current = hovered || active
 
   return (
-    <div className="page">
-      <div className="section-title">Sedes da Copa</div>
-      <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px' }}>
-        Passe o mouse (ou toque) nas cidades para ver os jogos de cada sede.
+    <div className="page" style={{ maxWidth: 860 }}>
+      <div className="section-title">Sedes da Copa 2026</div>
+      <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+        16 cidades-sede em 3 países. Clique em um marcador para ver os detalhes.
       </div>
 
       {/* Legenda */}
       <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        {Object.entries(COUNTRY_COLOR).map(([country, color]) => (
+        {Object.entries(COLOR).map(([country, color]) => (
           <div key={country} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: color }} />
-            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>{country}</span>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, boxShadow: `0 0 6px ${color}` }} />
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>{FLAG[country]} {country}</span>
           </div>
         ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ffd060', boxShadow: '0 0 8px #ffd060' }} />
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>🏆 Final</span>
+        </div>
       </div>
 
-      {/* Mapa */}
-      <div className="glass-card" style={{ padding: '8px', marginBottom: '16px', position: 'relative' }}>
-        <svg
-          viewBox="0 0 90 85"
-          style={{ width: '100%', height: 'auto', display: 'block' }}
-          onMouseLeave={() => setHovered(null)}
-        >
-          {/* Contorno dos países */}
-          <path d={MAP_PATH} fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.15)" strokeWidth="0.4" />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}>
+        {/* Mapa SVG */}
+        <div className="glass-card" style={{ padding: 12, overflow: 'hidden' }}>
+          <svg viewBox="0 0 100 65" style={{ width: '100%', height: 'auto', display: 'block' }}>
+            {/* Oceano de fundo */}
+            <rect width="100" height="65" fill="rgba(30,60,90,0.3)" rx="8" />
 
-          {/* Linhas de grade sutis */}
-          {[20,40,60].map(x => <line key={x} x1={x} y1="0" x2={x} y2="85" stroke="rgba(255,255,255,0.03)" strokeWidth="0.3" />)}
-          {[20,40,60].map(y => <line key={y} x1="0" y1={y} x2="90" y2={y} stroke="rgba(255,255,255,0.03)" strokeWidth="0.3" />)}
+            {/* Países */}
+            <path d={CANADA_PATH} fill="rgba(239,68,68,0.15)" stroke="rgba(239,68,68,0.4)" strokeWidth="0.3" />
+            <path d={USA_PATH}    fill="rgba(59,130,246,0.15)" stroke="rgba(59,130,246,0.4)" strokeWidth="0.3" />
+            <path d={MEXICO_PATH} fill="rgba(34,197,94,0.15)"  stroke="rgba(34,197,94,0.4)"  strokeWidth="0.3" />
 
-          {/* Cidades */}
-          {VENUES.map(v => {
-            const color = COUNTRY_COLOR[v.country] || '#fff'
-            const isActive = current?.id === v.id
-            return (
-              <g key={v.id}
-                style={{ cursor: 'pointer' }}
-                onMouseEnter={() => setHovered(v)}
-                onMouseLeave={() => setHovered(null)}
-                onClick={() => setActive(active?.id === v.id ? null : v)}
-              >
-                {/* Anel externo quando ativo */}
-                {isActive && (
-                  <circle cx={v.x} cy={v.y} r="3.5" fill="none" stroke={color} strokeWidth="0.6" opacity="0.5" />
-                )}
-                {/* Ponto principal */}
-                <circle
-                  cx={v.x} cy={v.y} r={isActive ? 2.2 : 1.6}
-                  fill={color}
-                  opacity={isActive ? 1 : 0.75}
-                  style={{ transition: 'all 0.2s' }}
-                />
-                {/* Pulso para cidade com final/semis */}
-                {(v.matches.some(m => m.includes('FINAL') || m.includes('Semis'))) && (
-                  <circle cx={v.x} cy={v.y} r="3" fill="none" stroke={color} strokeWidth="0.4" opacity="0.3">
-                    <animate attributeName="r" values="2;4;2" dur="2s" repeatCount="indefinite" />
-                    <animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite" />
-                  </circle>
-                )}
-              </g>
-            )
-          })}
-        </svg>
-      </div>
+            {/* Labels países */}
+            <text x="40" y="21" textAnchor="middle" fill="rgba(239,68,68,0.5)" fontSize="3" fontWeight="bold" letterSpacing="0.5">CANADÁ</text>
+            <text x="43" y="36" textAnchor="middle" fill="rgba(59,130,246,0.5)" fontSize="3" fontWeight="bold" letterSpacing="0.5">ESTADOS UNIDOS</text>
+            <text x="25" y="46" textAnchor="middle" fill="rgba(34,197,94,0.5)"  fontSize="2.5" fontWeight="bold" letterSpacing="0.4">MÉXICO</text>
 
-      {/* Info box */}
-      {current ? (
-        <div className="glass-card" style={{ padding: '16px 20px', border: `1px solid ${COUNTRY_COLOR[current.country]}44`, animation: 'fadeUp 0.2s ease' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-            <div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: '20px', letterSpacing: '0.06em', color: 'var(--text-primary)' }}>{current.city}</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{current.stadium} · {current.country}</div>
-            </div>
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: COUNTRY_COLOR[current.country], marginTop: '6px', flexShrink: 0 }} />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {current.matches.map((m, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: 'var(--radius-sm)', fontSize: '13px' }}>
-                <span style={{ color: m.includes('FINAL') ? 'var(--accent-gold)' : m.includes('Semis') || m.includes('Quartas') ? 'var(--text-secondary)' : 'var(--text-muted)', fontWeight: m.includes('FINAL') ? 700 : 400 }}>
-                  {m.includes('FINAL') ? '🏆' : m.includes('Semis') ? '⚔️' : m.includes('Quartas') ? '🔥' : m.includes('Oitavas') ? '⚡' : '⚽'} {m}
-                </span>
+            {/* Marcadores */}
+            {VENUES.map(v => {
+              const { x, y } = project(v.lat, v.lng)
+              const isFinal = v.matches.some(m => m.includes('FINAL'))
+              const color = isFinal ? '#ffd060' : COLOR[v.country]
+              const isActive = active?.id === v.id
+              const r = isActive ? 2.2 : 1.6
+
+              return (
+                <g key={v.id} style={{ cursor: 'pointer' }} onClick={() => setActive(active?.id === v.id ? null : v)}>
+                  {isActive && <circle cx={x} cy={y} r={r + 1.5} fill="none" stroke={color} strokeWidth="0.4" opacity="0.5" />}
+                  <circle cx={x} cy={y} r={r} fill={color} opacity={isActive ? 1 : 0.85} style={{ transition: 'all 0.2s' }} />
+                  {isFinal && (
+                    <circle cx={x} cy={y} r={r + 0.5} fill="none" stroke={color} strokeWidth="0.3" opacity="0.4">
+                      <animate attributeName="r" values={`${r};${r+2.5};${r}`} dur="2s" repeatCount="indefinite" />
+                      <animate attributeName="opacity" values="0.5;0;0.5" dur="2s" repeatCount="indefinite" />
+                    </circle>
+                  )}
+                  {/* Nome da cidade */}
+                  <text
+                    x={x + (x > 60 ? -2.5 : 2.5)}
+                    y={y - 1.2}
+                    textAnchor={x > 60 ? 'end' : 'start'}
+                    fill="rgba(240,244,255,0.8)"
+                    fontSize="1.8"
+                    fontWeight={isActive ? 'bold' : 'normal'}
+                    style={{ pointerEvents: 'none', transition: 'all 0.2s' }}
+                  >
+                    {v.city}
+                  </text>
+                </g>
+              )
+            })}
+          </svg>
+        </div>
+
+        {/* Info da cidade selecionada */}
+        {active ? (
+          <div className="glass-card" style={{ padding: '16px 20px', border: `1px solid ${active.matches.some(m => m.includes('FINAL')) ? 'rgba(255,208,96,0.3)' : COLOR[active.country] + '44'}`, animation: 'fadeUp 0.2s ease' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+              <div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: '22px', letterSpacing: '0.06em' }}>{active.city}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{active.stadium} · {FLAG[active.country]} {active.country}</div>
               </div>
-            ))}
+              <button onClick={() => setActive(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '20px' }}>×</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {active.matches.map((m, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', fontSize: '13px' }}>
+                  <span>{m.includes('FINAL') ? '🏆' : m.includes('Semi') ? '⚔️' : m.includes('Quartas') ? '🔥' : m.includes('Oitavas') ? '⚡' : m.includes('Abertura') ? '🎉' : '⚽'}</span>
+                  <span style={{ color: m.includes('FINAL') ? 'var(--accent-gold)' : 'var(--text-secondary)', fontWeight: m.includes('FINAL') ? 700 : 400 }}>{m}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="glass-card" style={{ padding: '16px 20px', textAlign: 'center' }}>
-          <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>👆 Clique em uma cidade no mapa para ver os jogos</div>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>
-            {VENUES.length} sedes · 3 países · 1 Copa
+        ) : (
+          <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', padding: '12px' }}>
+            👆 Clique em uma cidade no mapa
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
