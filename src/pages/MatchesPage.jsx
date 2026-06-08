@@ -181,22 +181,21 @@ function TeamCircle({ name, shieldUrl, size = 46 }) {
       width: size, height: size,
       borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
       border: '2px solid rgba(255,255,255,0.18)',
-      background: useShield ? '#fff' : '#1a1f2e',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: '#1a1f2e',
     }}>
       {src ? (
         <img
           src={src}
           alt={name}
           style={{
-            width: useShield ? '96%' : '100%',
-            height: useShield ? '96%' : '100%',
-            objectFit: useShield ? 'contain' : 'cover',
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
           }}
           onError={() => { if (useShield) setFailed(true) }}
         />
       ) : (
-        <div style={{ fontSize: size * 0.42 }}>🏳️</div>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', width:'100%', height:'100%', fontSize: size * 0.42 }}>🏳️</div>
       )}
     </div>
   )
