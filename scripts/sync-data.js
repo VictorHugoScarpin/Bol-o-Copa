@@ -94,23 +94,25 @@ async function syncMatches() {
       continue
     }
 
-    const { error } = await supabase.from('matches').upsert(
-      {
-        external_id: String(match.id),
-        home_team: match.homeTeam.name,
-        away_team: match.awayTeam.name,
-        home_flag: FLAG_MAP[match.homeTeam.name] || '🏳️',
-        away_flag: FLAG_MAP[match.awayTeam.name] || '🏳️',
-        match_date: new Date(match.utcDate).toISOString(),
-        stage: mapStage(match.stage),
-        group_name: mapGroup(match.group),
-        status: mapStatus(match.status),
-        home_score: match.score?.fullTime?.home ?? null,
-        away_score: match.score?.fullTime?.away ?? null,
-        stream_url: 'https://www.youtube.com/@CazeTV',
-      },
-      { onConflict: 'external_id' }
-    )
+   const { error } = await supabase.from('matches').upsert(
+  {
+    external_id: String(match.id),
+    home_team: match.homeTeam.name,
+    away_team: match.awayTeam.name,
+    home_flag: FLAG_MAP[match.homeTeam.name] || '🏳️',
+    away_flag: FLAG_MAP[match.awayTeam.name] || '🏳️',
+    home_shield: match.homeTeam.crest || null,   // ✅ escudo
+    away_shield: match.awayTeam.crest || null,   // ✅ escudo
+    match_date: new Date(match.utcDate).toISOString(),
+    stage: mapStage(match.stage),
+    group_name: mapGroup(match.group),
+    status: mapStatus(match.status),
+    home_score: match.score?.fullTime?.home ?? null,
+    away_score: match.score?.fullTime?.away ?? null,
+    stream_url: 'https://www.youtube.com/@CazeTV',
+  },
+  { onConflict: 'external_id' }
+)
 
     if (error) {
       console.error(`⚠️ Erro no jogo ${match.id}: ${error.message}`)
