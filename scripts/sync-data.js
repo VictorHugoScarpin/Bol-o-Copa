@@ -5,7 +5,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 const FOOTBALL_API_KEY = process.env.FOOTBALL_API_KEY
 
 const LEAGUE_ID = 1
-const SEASON = 2022
+const SEASON = 2022 // Usamos 2022 como teste garantido
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
@@ -21,24 +21,48 @@ const FLAG_MAP = {
   'Tunisia': '🇹🇳', 'Costa Rica': '🇨🇷', 'Wales': '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
   'Chile': '🇨🇱', 'Peru': '🇵🇪', 'Paraguay': '🇵🇾', 'Venezuela': '🇻🇪',
   'Bolivia': '🇧🇴', 'Austria': '🇦🇹', 'Turkey': '🇹🇷', 'Ukraine': '🇺🇦',
-  'Mexico': '🇲🇽', 'Honduras': '🇭🇳', 'Panama': '🇵🇦', 'Jamaica': '🇯🇲',
+  'Honduras': '🇭🇳', 'Panama': '🇵🇦', 'Jamaica': '🇯🇲',
+}
+
+async function checkApiStatus() {
+  if (!FOOTBALL_API_KEY) throw new Error("ERRO: FOOTBALL_API_KEY em falta no GitHub Secrets.");
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) throw new Error("ERRO: Chaves do Supabase em falta.");
+
+  console.log('🔍 A verificar status e credenciais da API...');
+  const res = await fetch('https://v3.football.api-sports.io/status', {
+    headers: {
+      'x-apisports-key': FOOTBALL_API_KEY,
+      'x-rapidapi-key': FOOTBALL_API_KEY
+    }
+  });
+  
+  const data = await res.json();
+  
+  if (data.errors && Object.keys(data.errors).length > 0 && !Array.isArray(data.errors)) {
+     throw new Error(`Acesso negado pela API: ${JSON.stringify(data.errors)}`);
+  }
+  
+  const req = data.response.requests;
+  console.log(`📊 Cota Diária: ${req.current} requisições usadas de ${req.limit_day}.`);
+  
+  if (req.current >= req.limit_day) {
+     throw new Error("LIMITE DIÁRIO ATINGIDO! O processo não pode continuar.");
+  }
 }
 
 async function apiRequest(endpoint) {
   const res = await fetch(`https://v3.football.api-sports.io${endpoint}`, {
     headers: {
-      // CORREÇÃO AQUI: Mudamos de x-rapidapi-key para x-apisports-key
-      'x-apisports-key': FOOTBALL_API_KEY 
+      'x-apisports-key': FOOTBALL_API_KEY,
+      'x-rapidapi-key': FOOTBALL_API_KEY
     }
   })
-  
-  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  if (!res.ok) throw new Error(`Erro HTTP ao ligar à API: ${res.status}`)
   
   const data = await res.json()
   
-  // TRAVA DE SEGURANÇA: Se a API negar acesso, o GitHub vai ficar vermelho e mostrar o porquê!
   if (data.errors && Object.keys(data.errors).length > 0 && !Array.isArray(data.errors)) {
-    throw new Error(`A API negou o acesso: ${JSON.stringify(data.errors)}`);
+    throw new Error(`Erro devolvido no Endpoint ${endpoint}: ${JSON.stringify(data.errors)}`);
   }
   
   return data.response
@@ -58,8 +82,13 @@ function mapStage(round) {
 }
 
 async function syncMatches() {
-  console.log('📅 Sincronizando jogos...')
+  console.log('📅 A descarregar jogos...')
   const fixtures = await apiRequest(`/fixtures?league=${LEAGUE_ID}&season=${SEASON}`)
+  
+  if (!fixtures || fixtures.length === 0) {
+      console.log('⚠️ AVISO: A API comunicou corretamente, mas não enviou nenhum jogo (Lista vazia).');
+      return;
+  }
 
   for (const fixture of fixtures) {
     const f = fixture.fixture
@@ -76,7 +105,7 @@ async function syncMatches() {
     if (['1H', '2H', 'HT', 'ET', 'P', 'LIVE'].includes(s)) status = 'live'
     if (['FT', 'AET', 'PEN'].includes(s)) status = 'finished'
 
-    await supabase.from('matches').upsert({
+    const { error } = await supabase.from('matches').upsert({
       external_id: String(f.id),
       home_team: h.name,
       away_team: a.name,
@@ -88,15 +117,19 @@ async function syncMatches() {
       stage,
       group_name: groupName,
       status,
-      stream_url: 'https://www.youtube.com/@CazéTV',
+      stream_url: 'https://www.youtube.com/@CazeTV',
     }, { onConflict: 'external_id' })
+
+    if (error) throw new Error(`Falha a guardar jogo no Supabase: ${error.message}`);
   }
-  console.log(`✅ ${fixtures.length} jogos sincronizados`)
+  console.log(`✅ ${fixtures.length} jogos guardados no banco de dados!`)
 }
 
 async function syncStandings() {
-  console.log('📊 Sincronizando grupos...')
+  console.log('📊 A descarregar grupos...')
   const standings = await apiRequest(`/standings?league=${LEAGUE_ID}&season=${SEASON}`)
+  
+  if (!standings || standings.length === 0) return;
 
   const rows = []
   for (const league of standings) {
@@ -120,56 +153,22 @@ async function syncStandings() {
     }
   }
 
-  await supabase.from('group_standings').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  if (rows.length > 0) await supabase.from('group_standings').insert(rows)
-  console.log(`✅ ${rows.length} times sincronizados`)
-}
-
-async function syncTopScorers() {
-  console.log('⚽ Sincronizando artilheiros...')
-  const scorers = await apiRequest(`/players/topscorers?league=${LEAGUE_ID}&season=${SEASON}`)
-
-  const rows = scorers.slice(0, 10).map(p => ({
-    player_name: p.player.name,
-    team_name: p.statistics[0]?.team?.name || '',
-    flag_emoji: FLAG_MAP[p.statistics[0]?.team?.name] || '',
-    photo_url: p.player.photo || null,
-    goals: p.statistics[0]?.goals?.total || 0,
-    updated_at: new Date().toISOString(),
-  }))
-
-  await supabase.from('top_scorers').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  if (rows.length > 0) await supabase.from('top_scorers').insert(rows)
-  console.log(`✅ ${rows.length} artilheiros sincronizados`)
-}
-
-async function syncTopAssists() {
-  console.log('👟 Sincronizando assistências...')
-  const assists = await apiRequest(`/players/topassists?league=${LEAGUE_ID}&season=${SEASON}`)
-
-  const rows = assists.slice(0, 10).map(p => ({
-    player_name: p.player.name,
-    team_name: p.statistics[0]?.team?.name || '',
-    flag_emoji: FLAG_MAP[p.statistics[0]?.team?.name] || '',
-    photo_url: p.player.photo || null,
-    assists: p.statistics[0]?.goals?.assists || 0,
-    updated_at: new Date().toISOString(),
-  }))
-
-  await supabase.from('top_assists').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  if (rows.length > 0) await supabase.from('top_assists').insert(rows)
-  console.log(`✅ ${rows.length} assistências sincronizadas`)
+  if (rows.length > 0) {
+    await supabase.from('group_standings').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    const { error } = await supabase.from('group_standings').insert(rows)
+    if (error) throw new Error(`Falha a guardar grupos no Supabase: ${error.message}`);
+  }
+  console.log(`✅ ${rows.length} seleções atualizadas nos grupos!`)
 }
 
 async function main() {
   try {
+    await checkApiStatus()
     await syncMatches()
     await syncStandings()
-    await syncTopScorers()
-    await syncTopAssists()
-    console.log('🏆 Sync completo!')
+    console.log('🏆 Sincronização concluída com êxito e gravada no banco!')
   } catch (err) {
-    console.error('❌ Erro:', err.message)
+    console.error('❌ ERRO ENCONTRADO DURANTE A EXECUÇÃO:', err.message)
     process.exit(1)
   }
 }
