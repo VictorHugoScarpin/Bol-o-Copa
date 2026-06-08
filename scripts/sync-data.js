@@ -35,14 +35,12 @@ const FLAG_MAP = {
   'Côte d\'Ivoire': '🇨🇮', 'Algeria': '🇩🇿', 'Egypt': '🇪🇬',
   'New Zealand': '🇳🇿', 'Slovakia': '🇸🇰', 'Romania': '🇷🇴',
   'Hungary': '🇭🇺', 'Czechia': '🇨🇿', 'Slovenia': '🇸🇮',
-  'Venezuela': '🇻🇪', 'Guatemala': '🇬🇹', 'El Salvador': '🇸🇻',
+  'Guatemala': '🇬🇹', 'El Salvador': '🇸🇻',
 }
 
 async function apiRequest(endpoint) {
   const res = await fetch(`https://api.football-data.org/v4${endpoint}`, {
-    headers: {
-      'X-Auth-Token': FOOTBALL_API_KEY,
-    },
+    headers: { 'X-Auth-Token': FOOTBALL_API_KEY },
   })
   if (!res.ok) {
     const text = await res.text()
@@ -54,12 +52,11 @@ async function apiRequest(endpoint) {
 function mapStatus(status) {
   if (status === 'FINISHED') return 'finished'
   if (status === 'IN_PLAY' || status === 'PAUSED') return 'live'
-  if (status === 'TIMED' || status === 'SCHEDULED') return 'upcoming'
   return 'upcoming'
 }
 
-function mapStage(stage, group) {
-  if (stage === 'GROUP_STAGE') return group ? `Grupo ${group.replace('GROUP_', '')}` : 'Grupos'
+function mapStage(stage) {
+  if (stage === 'GROUP_STAGE') return 'Grupos'
   if (stage === 'ROUND_OF_16') return 'Oitavas'
   if (stage === 'QUARTER_FINALS') return 'Quartas'
   if (stage === 'SEMI_FINALS') return 'Semis'
@@ -68,10 +65,14 @@ function mapStage(stage, group) {
   return stage || 'Grupos'
 }
 
+function mapGroup(group) {
+  if (!group) return null
+  // API retorna "GROUP_A", "GROUP_B", etc.
+  return group.replace('GROUP_', 'Grupo ')
+}
+
 async function syncMatches() {
   console.log('📅 A descarregar jogos da Copa 2026...')
-
-  // ID 2000 = FIFA World Cup no football-data.org
   const data = await apiRequest('/competitions/WC/matches?season=2026')
 
   const matches = data.matches
@@ -81,10 +82,17 @@ async function syncMatches() {
 
   console.log(`🔢 ${matches.length} jogos encontrados, a guardar...`)
 
+  let salvos = 0
+  let pulados = 0
   let erros = 0
+
   for (const match of matches) {
-    const homeScore = match.score?.fullTime?.home ?? null
-    const awayScore = match.score?.fullTime?.away ?? null
+    // ✅ Pula jogos eliminatórios sem times definidos ainda
+    if (!match.homeTeam?.name || !match.awayTeam?.name) {
+      console.log(`⏭️ Jogo ${match.id} sem times definidos, pulando...`)
+      pulados++
+      continue
+    }
 
     const { error } = await supabase.from('matches').upsert(
       {
@@ -94,10 +102,11 @@ async function syncMatches() {
         home_flag: FLAG_MAP[match.homeTeam.name] || '🏳️',
         away_flag: FLAG_MAP[match.awayTeam.name] || '🏳️',
         match_date: new Date(match.utcDate).toISOString(),
-        stage: mapStage(match.stage, match.group),
+        stage: mapStage(match.stage),
+        group_name: mapGroup(match.group),
         status: mapStatus(match.status),
-        home_score: homeScore,
-        away_score: awayScore,
+        home_score: match.score?.fullTime?.home ?? null,
+        away_score: match.score?.fullTime?.away ?? null,
         stream_url: 'https://www.youtube.com/@CazeTV',
       },
       { onConflict: 'external_id' }
@@ -106,13 +115,13 @@ async function syncMatches() {
     if (error) {
       console.error(`⚠️ Erro no jogo ${match.id}: ${error.message}`)
       erros++
+    } else {
+      salvos++
     }
   }
 
-  if (erros > 0) {
-    throw new Error(`${erros} jogos falharam ao guardar.`)
-  }
-  console.log(`✅ ${matches.length} jogos guardados!`)
+  console.log(`✅ ${salvos} salvos | ⏭️ ${pulados} pulados (sem times) | ❌ ${erros} erros`)
+  if (erros > 0) throw new Error(`${erros} jogos falharam ao guardar.`)
 }
 
 async function main() {
