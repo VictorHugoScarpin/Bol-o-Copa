@@ -1,47 +1,126 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js'
 
-// Inicialização explícita para evitar o erro de WebSocket no ambiente GitHub
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY,
-  {
-    realtime: { enabled: false }
-  }
-);
+const SUPABASE_URL = process.env.SUPABASE_URL
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
+const FOOTBALL_API_KEY = process.env.FOOTBALL_API_KEY
+const LEAGUE_ID = 1
+const SEASON = 2022
 
-async function sync() {
-  console.log("🚀 A iniciar sincronização...");
-  
-  // URL da API para a época 2022 (Teste de prova real)
-  const url = 'https://v3.football.api-sports.io/fixtures?league=1&season=2022';
-  const res = await fetch(url, {
-    headers: { 'x-apisports-key': process.env.FOOTBALL_API_KEY }
-  });
-  
-  const data = await res.json();
-  
-  if (!data.response || data.response.length === 0) {
-    throw new Error("A API respondeu, mas não encontrou jogos.");
-  }
+// ✅ Realtime desativado — resolve o crash de WebSocket no Node 20
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+  },
+  realtime: {
+    params: { eventsPerSecond: -1 },
+  },
+  global: {
+    fetch: fetch,
+  },
+})
 
-  console.log(`📡 Recebidos ${data.response.length} jogos. A gravar...`);
-
-  for (const f of data.response.slice(0, 5)) {
-    const { error } = await supabase.from('matches').upsert({
-      external_id: String(f.fixture.id),
-      home_team: f.teams.home.name,
-      away_team: f.teams.away.name,
-      match_date: f.fixture.date,
-      status: 'upcoming'
-    }, { onConflict: 'external_id' });
-    
-    if (error) throw new Error("Erro ao gravar no Supabase: " + error.message);
-  }
-  
-  console.log("✅ Sync concluído com sucesso!");
+const FLAG_MAP = {
+  'Brazil': '🇧🇷', 'Argentina': '🇦🇷', 'France': '🇫🇷', 'Germany': '🇩🇪',
+  'Spain': '🇪🇸', 'England': '🏴󠁧󠁢󠁥󠁮󠁧󠁿', 'Portugal': '🇵🇹', 'Netherlands': '🇳🇱',
+  'Italy': '🇮🇹', 'Uruguay': '🇺🇾', 'Colombia': '🇨🇴', 'Mexico': '🇲🇽',
+  'USA': '🇺🇸', 'Canada': '🇨🇦', 'Japan': '🇯🇵', 'South Korea': '🇰🇷',
+  'Morocco': '🇲🇦', 'Senegal': '🇸🇳', 'Ghana': '🇬🇭', 'Nigeria': '🇳🇬',
+  'Australia': '🇦🇺', 'Saudi Arabia': '🇸🇦', 'Iran': '🇮🇷', 'Qatar': '🇶🇦',
+  'Croatia': '🇭🇷', 'Serbia': '🇷🇸', 'Switzerland': '🇨🇭', 'Belgium': '🇧🇪',
+  'Denmark': '🇩🇰', 'Poland': '🇵🇱', 'Cameroon': '🇨🇲', 'Ecuador': '🇪🇨',
+  'Tunisia': '🇹🇳', 'Costa Rica': '🇨🇷', 'Wales': '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+  'Chile': '🇨🇱', 'Peru': '🇵🇪', 'Paraguay': '🇵🇾', 'Venezuela': '🇻🇪',
+  'Bolivia': '🇧🇴', 'Austria': '🇦🇹', 'Turkey': '🇹🇷', 'Ukraine': '🇺🇦',
+  'Honduras': '🇭🇳', 'Panama': '🇵🇦', 'Jamaica': '🇯🇲',
 }
 
-sync().catch(err => {
-  console.error("❌ ERRO:", err.message);
-  process.exit(1);
-});
+async function checkApiStatus() {
+  console.log('🔍 A verificar status da API...')
+  const res = await fetch('https://v3.football.api-sports.io/status', {
+    headers: {
+      'x-apisports-key': FOOTBALL_API_KEY,
+      'x-rapidapi-key': FOOTBALL_API_KEY,
+    },
+  })
+  const data = await res.json()
+  if (data.errors && Object.keys(data.errors).length > 0) {
+    throw new Error(`Erro API: ${JSON.stringify(data.errors)}`)
+  }
+  console.log(`📊 Cota Diária: ${data.response.requests.current} de ${data.response.requests.limit_day} usadas.`)
+}
+
+async function apiRequest(endpoint) {
+  const res = await fetch(`https://v3.football.api-sports.io${endpoint}`, {
+    headers: {
+      'x-apisports-key': FOOTBALL_API_KEY,
+      'x-rapidapi-key': FOOTBALL_API_KEY,
+    },
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const data = await res.json()
+  return data.response
+}
+
+function mapStage(round) {
+  if (!round) return 'Grupos'
+  const r = round.toLowerCase()
+  if (r.includes('group')) return 'Grupos'
+  if (r.includes('final')) return 'F'
+  return 'Grupos'
+}
+
+async function syncMatches() {
+  console.log('📅 A descarregar jogos...')
+  const fixtures = await apiRequest(`/fixtures?league=${LEAGUE_ID}&season=${SEASON}`)
+
+  if (!fixtures || fixtures.length === 0) {
+    throw new Error('API retornou lista vazia de jogos')
+  }
+
+  let erros = 0
+  for (const fixture of fixtures) {
+    const f = fixture.fixture
+    const h = fixture.teams.home
+    const a = fixture.teams.away
+
+    const { error } = await supabase.from('matches').upsert(
+      {
+        external_id: String(f.id),
+        home_team: h.name,
+        away_team: a.name,
+        home_flag: FLAG_MAP[h.name] || '🏳️',
+        away_flag: FLAG_MAP[a.name] || '🏳️',
+        match_date: new Date(f.date).toISOString(),
+        stage: mapStage(fixture.league.round),
+        status: 'upcoming',
+        stream_url: 'https://www.youtube.com/@CazeTV',
+      },
+      { onConflict: 'external_id' }
+    )
+
+    if (error) {
+      console.error(`⚠️ Erro no jogo ${f.id}: ${error.message}`)
+      erros++
+    }
+  }
+
+  if (erros > 0) {
+    throw new Error(`${erros} jogos falharam ao guardar.`)
+  }
+  console.log(`✅ ${fixtures.length} jogos guardados!`)
+}
+
+async function main() {
+  try {
+    await checkApiStatus()
+    await syncMatches()
+    console.log('🏆 Sincronização concluída!')
+  } catch (err) {
+    console.error('❌ ERRO:', err.message)
+    process.exit(1)
+  }
+}
+
+main()
