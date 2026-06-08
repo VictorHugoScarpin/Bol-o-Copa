@@ -1,34 +1,28 @@
 name: Sync Copa Data
+
 on:
   schedule:
     - cron: '0 * * * *'
   workflow_dispatch:
+
 jobs:
   sync:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Node
+      - name: Checkout do repositório
+        uses: actions/checkout@v3
+
+      - name: Setup Node 20
         uses: actions/setup-node@v3
         with:
           node-version: '20'
-      - name: Install dependencies
+
+      - name: Instalar dependências
         run: npm install @supabase/supabase-js
-      - name: Criar script de emergência
-        run: |
-          echo 'import { createClient } from "@supabase/supabase-js";' > scripts/sync-data.js
-          echo 'const s = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);' >> scripts/sync-data.js
-          echo 'async function run() {' >> scripts/sync-data.js
-          echo '  const res = await fetch("https://v3.football.api-sports.io/fixtures?league=1&season=2022", { headers: { "x-apisports-key": process.env.FOOTBALL_API_KEY } });' >> scripts/sync-data.js
-          echo '  const data = await res.json();' >> scripts/sync-data.js
-          echo '  for (const f of data.response.slice(0, 5)) {' >> scripts/sync-data.js
-          echo '    await s.from("matches").upsert({ external_id: String(f.fixture.id), home_team: f.teams.home.name, away_team: f.teams.away.name, match_date: f.fixture.date, status: "upcoming" }, { onConflict: "external_id" });' >> scripts/sync-data.js
-          echo '  }' >> scripts/sync-data.js
-          echo '  console.log("Sucesso total!");' >> scripts/sync-data.js
-          echo '}' >> scripts/sync-data.js
-          echo 'run();' >> scripts/sync-data.js
-      - name: Run sync script
-        run: node scripts/sync-data.js
+
+      - name: Correr sync
+        run: node --experimental-vm-modules scripts/sync-data.js
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
