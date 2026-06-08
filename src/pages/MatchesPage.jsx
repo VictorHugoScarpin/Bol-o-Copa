@@ -145,16 +145,21 @@ const TEAM_SHIELD = {
   'Panama': 'https://upload.wikimedia.org/wikipedia/pt/thumb/6/6c/Panama_FA_2.svg.png/200px-Panama_FA_2.svg.png',
 }
 
-// URLs diretas para bandeiras que o flagcdn pode não ter ou nome não bater
-const FLAG_URL_OVERRIDE = {
-  'Bosnia and Herzegovina': 'https://upload.wikimedia.org/wikipedia/commons/b/bf/Flag_of_Bosnia_and_Herzegovina.svg',
-  'Bosnia & Herzegovina': 'https://upload.wikimedia.org/wikipedia/commons/b/bf/Flag_of_Bosnia_and_Herzegovina.svg',
-  'Bosnia Herzegovina': 'https://upload.wikimedia.org/wikipedia/commons/b/bf/Flag_of_Bosnia_and_Herzegovina.svg',
-  'Bosna i Hercegovina': 'https://upload.wikimedia.org/wikipedia/commons/b/bf/Flag_of_Bosnia_and_Herzegovina.svg',
+// Bandeiras salvas localmente em /public (para países com problema no flagcdn)
+const FLAG_LOCAL = {
+  'Argentina': '/ar.png',
+  'Bosnia and Herzegovina': '/ba.png',
+  'Bosnia & Herzegovina': '/ba.png',
+  'Bosnia Herzegovina': '/ba.png',
+  'Bosna i Hercegovina': '/ba.png',
+  'Jordan': '/jor.png',
+  'Korea Republic': '/cor.png',
+  'South Korea': '/cor.png',
+  'Uzbekistan': '/uz.png',
 }
 
 function getFlagUrl(name) {
-  if (FLAG_URL_OVERRIDE[name]) return FLAG_URL_OVERRIDE[name]
+  if (FLAG_LOCAL[name]) return FLAG_LOCAL[name]
   const iso = TEAM_ISO[name]
   return iso ? `https://flagcdn.com/w160/${iso}.png` : null
 }
