@@ -41,6 +41,7 @@ const TEAM_ISO = {
   'India': 'in', 'Uzbekistan': 'uz', 'Kazakhstan': 'kz',
   'Iraq': 'iq', 'Jordan': 'jo', 'United Arab Emirates': 'ae', 'UAE': 'ae',
   'Oman': 'om', 'Kuwait': 'kw', 'Bahrain': 'bh',
+  'Bosnia Herzegovina': 'ba', 'Bosna i Hercegovina': 'ba',
 }
 
 const TEAM_PT = {
@@ -78,6 +79,8 @@ const TEAM_PT = {
   'Georgia': 'Geórgia', 'Kosovo': 'Kosovo',
   'Trinidad and Tobago': 'Trinidad e Tobago', 'Cuba': 'Cuba',
   'United Arab Emirates': 'Emirados Árabes', 'UAE': 'Emirados Árabes',
+  'Bosnia Herzegovina': 'Bósnia e Herzegovina',
+  'Bosna i Hercegovina': 'Bósnia e Herzegovina',
 }
 
 // Brasões fixos por seleção (Wikipedia)
@@ -97,6 +100,8 @@ const TEAM_SHIELD = {
   'Belgium': 'https://upload.wikimedia.org/wikipedia/pt/thumb/8/88/Royal_Belgian_FA_logo_2019.png/200px-Royal_Belgian_FA_logo_2019.png',
   'Bosnia and Herzegovina': 'https://upload.wikimedia.org/wikipedia/pt/thumb/5/5a/Logo_of_the_Football_Association_of_Bosnia_and_Herzegovina_%282013-present%29.png/200px-Logo_of_the_Football_Association_of_Bosnia_and_Herzegovina_%282013-present%29.png',
   'Bosnia & Herzegovina': 'https://upload.wikimedia.org/wikipedia/pt/thumb/5/5a/Logo_of_the_Football_Association_of_Bosnia_and_Herzegovina_%282013-present%29.png/200px-Logo_of_the_Football_Association_of_Bosnia_and_Herzegovina_%282013-present%29.png',
+  'Bosnia Herzegovina': 'https://upload.wikimedia.org/wikipedia/pt/thumb/5/5a/Logo_of_the_Football_Association_of_Bosnia_and_Herzegovina_%282013-present%29.png/200px-Logo_of_the_Football_Association_of_Bosnia_and_Herzegovina_%282013-present%29.png',
+  'Bosna i Hercegovina': 'https://upload.wikimedia.org/wikipedia/pt/thumb/5/5a/Logo_of_the_Football_Association_of_Bosnia_and_Herzegovina_%282013-present%29.png/200px-Logo_of_the_Football_Association_of_Bosnia_and_Herzegovina_%282013-present%29.png',
   'Croatia': 'https://upload.wikimedia.org/wikipedia/pt/thumb/5/56/Croatia_football_federation.png/200px-Croatia_football_federation.png',
   'Scotland': 'https://upload.wikimedia.org/wikipedia/pt/thumb/e/e4/Sele%C3%A7%C3%A3o_Escocesa_logo.png/200px-Sele%C3%A7%C3%A3o_Escocesa_logo.png',
   'Spain': 'https://upload.wikimedia.org/wikipedia/pt/thumb/4/44/Spain_National_Football_Team_badge.png/200px-Spain_National_Football_Team_badge.png',
@@ -175,9 +180,9 @@ function TeamCircle({ name, shieldUrl, size = 46 }) {
           src={src}
           alt={name}
           style={{
-            width: useShield ? '80%' : '100%',
-            height: useShield ? '80%' : '100%',
-            objectFit: useShield ? 'contain' : 'cover',
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
           }}
           onError={() => { if (useShield) setFailed(true) }}
         />
