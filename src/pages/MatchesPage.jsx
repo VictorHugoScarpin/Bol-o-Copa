@@ -153,50 +153,66 @@ function getPT(name) {
   return TEAM_PT[name] || name
 }
 
-// Bolinha: só a BANDEIRA
+// Bolinha: brasão da seleção (fallback: bandeira)
 function TeamCircle({ name, size = 46 }) {
+  const shieldUrl = getShieldUrl(name)
   const flagUrl = getFlagUrl(name)
+  const [useFallback, setUseFallback] = useState(false)
+
+  const src = (!useFallback && shieldUrl) ? shieldUrl : flagUrl
 
   return (
     <div style={{
       position: 'relative', width: size, height: size,
       borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
-      border: '1.5px solid rgba(255,255,255,0.12)',
-      background: '#0d1117',
+      border: '2px solid rgba(255,255,255,0.18)',
+      background: '#1a1f2e',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
-      {flagUrl ? (
-        <img src={flagUrl} alt={name} style={{
-          position: 'absolute', inset: 0, width: '100%', height: '100%',
-          objectFit: 'cover',
-        }} onError={e => { e.target.style.display = 'none' }} />
+      {src ? (
+        <img
+          src={src}
+          alt={name}
+          style={{
+            width: (!useFallback && shieldUrl) ? '82%' : '100%',
+            height: (!useFallback && shieldUrl) ? '82%' : '100%',
+            objectFit: (!useFallback && shieldUrl) ? 'contain' : 'cover',
+          }}
+          onError={() => {
+            if (!useFallback && shieldUrl) setUseFallback(true)
+          }}
+        />
       ) : (
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex',
-          alignItems: 'center', justifyContent: 'center', fontSize: size * 0.42,
-        }}>🏳️</div>
+        <div style={{ fontSize: size * 0.42 }}>🏳️</div>
       )}
     </div>
   )
 }
 
-// Fundo do card: só o BRASÃO com opacidade
+// Fundo do card: bandeira preenchendo cada lado, com fade no centro
 function CardBg({ name, side }) {
-  const shieldUrl = getShieldUrl(name)
-  if (!shieldUrl) return null
+  const flagUrl = getFlagUrl(name)
+  if (!flagUrl) return null
+
+  const gradientDir = side === 'left' ? 'to right' : 'to left'
 
   return (
     <div style={{
       position: 'absolute', top: 0, bottom: 0, [side]: 0,
-      width: '55%', overflow: 'hidden', pointerEvents: 'none',
+      width: '52%', overflow: 'hidden', pointerEvents: 'none',
     }}>
-      <img src={shieldUrl} alt="" style={{
-        position: 'absolute', top: '50%',
-        [side]: '8%',
-        transform: 'translateY(-50%)',
-        width: '65%', height: '65%',
-        objectFit: 'contain',
-        opacity: 0.13,
+      <img src={flagUrl} alt="" style={{
+        position: 'absolute', inset: 0,
+        width: '100%', height: '100%',
+        objectFit: 'cover',
+        opacity: 0.18,
+        filter: 'saturate(1.4)',
       }} onError={e => { e.target.style.display = 'none' }} />
+      {/* Fade suave em direção ao centro */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: `linear-gradient(${gradientDir}, transparent 20%, rgba(13,17,23,0.85) 100%)`,
+      }} />
     </div>
   )
 }
@@ -215,6 +231,11 @@ function MatchCard({ match }) {
     }}>
       <CardBg name={match.home_team} side="left" />
       <CardBg name={match.away_team} side="right" />
+      {/* Overlay escuro no centro para legibilidade do placar/horário */}
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none',
+        background: 'radial-gradient(ellipse 40% 80% at 50% 50%, rgba(13,17,23,0.55) 0%, transparent 100%)',
+      }} />
 
       <div style={{ position: 'relative', zIndex: 1, padding: '14px 16px' }}>
         {/* Topo */}
