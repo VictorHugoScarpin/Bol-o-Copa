@@ -41,7 +41,7 @@ const TEAM_ISO = {
   'India': 'in', 'Uzbekistan': 'uz', 'Kazakhstan': 'kz',
   'Iraq': 'iq', 'Jordan': 'jo', 'United Arab Emirates': 'ae', 'UAE': 'ae',
   'Oman': 'om', 'Kuwait': 'kw', 'Bahrain': 'bh',
-  'Bosnia Herzegovina': 'ba', 'Bosna i Hercegovina': 'ba',
+  'Bosnia Herzegovina': 'ba', 'Bosna i Hercegovina': 'ba', 'Bosnia-Herzegovina': 'ba',
 }
 
 const TEAM_PT = {
@@ -69,6 +69,7 @@ const TEAM_PT = {
   'El Salvador': 'El Salvador', 'South Africa': 'África do Sul',
   'Bosnia and Herzegovina': 'Bósnia e Herzegovina',
   'Bosnia & Herzegovina': 'Bósnia e Herzegovina',
+  'Bosnia-Herzegovina': 'Bósnia e Herzegovina',
   'Haiti': 'Haiti', 'Curaçao': 'Curaçao', 'Curacao': 'Curaçao',
   'Cape Verde': 'Cabo Verde', 'Cape Verde Islands': 'Cabo Verde',
   'Congo DR': 'Congo RD', 'DR Congo': 'Congo RD',
@@ -102,6 +103,7 @@ const TEAM_SHIELD = {
   'Bosnia & Herzegovina': 'https://upload.wikimedia.org/wikipedia/pt/thumb/5/5a/Logo_of_the_Football_Association_of_Bosnia_and_Herzegovina_%282013-present%29.png/200px-Logo_of_the_Football_Association_of_Bosnia_and_Herzegovina_%282013-present%29.png',
   'Bosnia Herzegovina': 'https://upload.wikimedia.org/wikipedia/pt/thumb/5/5a/Logo_of_the_Football_Association_of_Bosnia_and_Herzegovina_%282013-present%29.png/200px-Logo_of_the_Football_Association_of_Bosnia_and_Herzegovina_%282013-present%29.png',
   'Bosna i Hercegovina': 'https://upload.wikimedia.org/wikipedia/pt/thumb/5/5a/Logo_of_the_Football_Association_of_Bosnia_and_Herzegovina_%282013-present%29.png/200px-Logo_of_the_Football_Association_of_Bosnia_and_Herzegovina_%282013-present%29.png',
+  'Bosnia-Herzegovina': 'https://upload.wikimedia.org/wikipedia/pt/thumb/5/5a/Logo_of_the_Football_Association_of_Bosnia_and_Herzegovina_%282013-present%29.png/200px-Logo_of_the_Football_Association_of_Bosnia_and_Herzegovina_%282013-present%29.png',
   'Croatia': 'https://upload.wikimedia.org/wikipedia/pt/thumb/5/56/Croatia_football_federation.png/200px-Croatia_football_federation.png',
   'Scotland': 'https://upload.wikimedia.org/wikipedia/pt/thumb/e/e4/Sele%C3%A7%C3%A3o_Escocesa_logo.png/200px-Sele%C3%A7%C3%A3o_Escocesa_logo.png',
   'Spain': 'https://upload.wikimedia.org/wikipedia/pt/thumb/4/44/Spain_National_Football_Team_badge.png/200px-Spain_National_Football_Team_badge.png',
@@ -152,6 +154,7 @@ const FLAG_LOCAL = {
   'Bosnia & Herzegovina': '/ba.png',
   'Bosnia Herzegovina': '/ba.png',
   'Bosna i Hercegovina': '/ba.png',
+  'Bosnia-Herzegovina': '/ba.png',
   'Jordan': '/jor.png',
   'Korea Republic': '/cor.png',
   'South Korea': '/cor.png',
