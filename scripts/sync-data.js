@@ -7,7 +7,12 @@ const FOOTBALL_API_KEY = process.env.FOOTBALL_API_KEY
 const LEAGUE_ID = 1
 const SEASON = 2022 // Usamos 2022 como teste garantido
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+// Substitua a linha const supabase = createClient(...) por isto:
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+  auth: {
+    persistSession: false
+  }
+});
 
 const FLAG_MAP = {
   'Brazil': '🇧🇷', 'Argentina': '🇦🇷', 'France': '🇫🇷', 'Germany': '🇩🇪',
@@ -107,27 +112,29 @@ async function syncMatches() {
 
     // Dentro da função syncMatches, substitua o bloco do supabase.from('matches') por este:
     
-    const { data, error } = await supabase
-      .from('matches') // Certifique-se que no Supabase a tabela se chama 'matches'
-      .upsert({
-        external_id: String(f.id),
-        home_team: h.name,
-        away_team: a.name,
-        home_flag: FLAG_MAP[h.name] || '🏳️',
-        away_flag: FLAG_MAP[a.name] || '🏳️',
-        home_score: status === 'finished' ? g.home : null,
-        away_score: status === 'finished' ? g.away : null,
-        match_date: new Date(f.date).toISOString(),
-        stage,
-        group_name: groupName,
-        status,
-        stream_url: 'https://www.youtube.com/@CazeTV',
-      }, { onConflict: 'external_id' });
+    // Substitua o bloco do upsert dentro de syncMatches por este:
+const { error } = await supabase
+  .from('matches')
+  .upsert(
+    {
+      external_id: String(f.id),
+      home_team: h.name,
+      away_team: a.name,
+      home_flag: FLAG_MAP[h.name] || '🏳️',
+      away_flag: FLAG_MAP[a.name] || '🏳️',
+      match_date: new Date(f.date).toISOString(),
+      stage,
+      group_name: groupName,
+      status,
+      stream_url: 'https://www.youtube.com/@CazeTV',
+    },
+    { onConflict: 'external_id' }
+  );
 
-    if (error) {
-      console.error("ERRO DETALHADO SUPABASE:", error);
-      throw new Error(`Falha a guardar jogo: ${error.message}`);
-    }
+if (error) {
+  console.error("ERRO DO SUPABASE:", JSON.stringify(error, null, 2));
+  throw new Error(error.message);
+}
   console.log(`✅ ${fixtures.length} jogos guardados no banco de dados!`)
 }
 
