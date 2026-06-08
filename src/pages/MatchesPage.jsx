@@ -69,7 +69,7 @@ function MatchCard({ match }) {
       <FlagBg name={match.away_team} emoji={match.away_flag} side="right" />
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <span className="badge badge-muted">{match.stage}{match.group_name ? ` · G${match.group_name}` : ''}</span>
+          <span className="badge badge-muted">{match.stage}{match.group_name ? ` · ${match.group_name}` : ''}</span>
           {live && <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--red)', fontWeight: 700 }}><div className="live-dot" />AO VIVO</span>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
