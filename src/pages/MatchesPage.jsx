@@ -145,7 +145,16 @@ const TEAM_SHIELD = {
   'Panama': 'https://upload.wikimedia.org/wikipedia/pt/thumb/6/6c/Panama_FA_2.svg.png/200px-Panama_FA_2.svg.png',
 }
 
+// URLs diretas para bandeiras que o flagcdn pode não ter ou nome não bater
+const FLAG_URL_OVERRIDE = {
+  'Bosnia and Herzegovina': 'https://upload.wikimedia.org/wikipedia/commons/b/bf/Flag_of_Bosnia_and_Herzegovina.svg',
+  'Bosnia & Herzegovina': 'https://upload.wikimedia.org/wikipedia/commons/b/bf/Flag_of_Bosnia_and_Herzegovina.svg',
+  'Bosnia Herzegovina': 'https://upload.wikimedia.org/wikipedia/commons/b/bf/Flag_of_Bosnia_and_Herzegovina.svg',
+  'Bosna i Hercegovina': 'https://upload.wikimedia.org/wikipedia/commons/b/bf/Flag_of_Bosnia_and_Herzegovina.svg',
+}
+
 function getFlagUrl(name) {
+  if (FLAG_URL_OVERRIDE[name]) return FLAG_URL_OVERRIDE[name]
   const iso = TEAM_ISO[name]
   return iso ? `https://flagcdn.com/w160/${iso}.png` : null
 }
@@ -172,7 +181,7 @@ function TeamCircle({ name, shieldUrl, size = 46 }) {
       width: size, height: size,
       borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
       border: '2px solid rgba(255,255,255,0.18)',
-      background: '#1a1f2e',
+      background: useShield ? '#fff' : '#1a1f2e',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       {src ? (
@@ -180,9 +189,9 @@ function TeamCircle({ name, shieldUrl, size = 46 }) {
           src={src}
           alt={name}
           style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
+            width: useShield ? '96%' : '100%',
+            height: useShield ? '96%' : '100%',
+            objectFit: useShield ? 'contain' : 'cover',
           }}
           onError={() => { if (useShield) setFailed(true) }}
         />
