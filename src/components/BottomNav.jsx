@@ -1,12 +1,12 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 
 const NAV_ITEMS = [
-  { path: '/', label: 'Jogos', icon: <HomeIcon /> },
-  { path: '/ranking', label: 'Ranking', icon: <TrophyIcon /> },
-  { path: '/grupos', label: 'Grupos', icon: <TableIcon /> },
-  { path: '/mata-mata', label: 'Chaves', icon: <BracketIcon /> },
-  { path: '/stats', label: 'Stats', icon: <StatsIcon /> },
-  { path: '/perfil', label: 'Perfil', icon: <UserIcon /> },
+  { path: '/',          label: 'Jogos',   icon: HomeIcon },
+  { path: '/ranking',   label: 'Ranking', icon: TrophyIcon },
+  { path: '/grupos',    label: 'Grupos',  icon: TableIcon },
+  { path: '/mata-mata', label: 'Chaves',  icon: BracketIcon },
+  { path: '/stats',     label: 'Stats',   icon: StatsIcon },
+  { path: '/perfil',    label: 'Perfil',  icon: UserIcon },
 ]
 
 export default function BottomNav() {
@@ -21,7 +21,7 @@ export default function BottomNav() {
           className={`nav-item ${pathname === item.path ? 'active' : ''}`}
           onClick={() => navigate(item.path)}
         >
-          {item.icon}
+          <item.icon />
           {item.label}
         </button>
       ))}
