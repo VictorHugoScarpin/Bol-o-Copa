@@ -15,7 +15,7 @@ export default function ProfilePage() {
     setSaving(true)
     await supabase.from('profiles').update({ display_name: displayName.trim() }).eq('id', user.id)
     await fetchProfile(user.id)
-    setMsg('Perfil atualizado!')
+    setMsg('✓ Perfil atualizado!')
     setSaving(false)
     setTimeout(() => setMsg(''), 3000)
   }
@@ -31,7 +31,7 @@ export default function ProfilePage() {
       const { data } = supabase.storage.from('avatars').getPublicUrl(path)
       await supabase.from('profiles').update({ avatar_url: data.publicUrl }).eq('id', user.id)
       await fetchProfile(user.id)
-      setMsg('Foto atualizada!')
+      setMsg('✓ Foto atualizada!')
       setTimeout(() => setMsg(''), 3000)
     }
     setUploading(false)
@@ -43,52 +43,65 @@ export default function ProfilePage() {
     <div className="page">
       <div className="section-title">Perfil</div>
 
-      <div className="glass-card" style={{ padding: '24px', marginBottom: '16px' }}>
+      <div className="glass-card" style={{ padding: '28px 24px', marginBottom: '12px' }}>
         {/* Avatar */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
           <div style={{ position: 'relative' }}>
             {profile?.avatar_url
-              ? <img src={profile.avatar_url} alt="" style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-glass-strong)' }} />
-              : <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(212,168,50,0.15)', border: '2px solid var(--accent-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: '32px', color: 'var(--accent-gold)' }}>{initials}</div>
+              ? <img src={profile.avatar_url} alt="" style={{ width: 84, height: 84, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--border-strong)' }} />
+              : <div style={{ width: 84, height: 84, borderRadius: '50%', background: 'var(--gold-dim)', border: '3px solid rgba(232,184,75,0.30)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: '34px', color: 'var(--gold)', letterSpacing: '0.06em' }}>{initials}</div>
             }
-            <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ position: 'absolute', bottom: -4, right: -4, width: 26, height: 26, borderRadius: '50%', background: 'var(--accent-gold)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              style={{ position: 'absolute', bottom: -2, right: -2, width: 28, height: 28, borderRadius: '50%', background: 'var(--gold)', border: '2px solid var(--void)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}
+            >
               {uploading ? '⟳' : '📷'}
             </button>
           </div>
           <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontWeight: 600, fontSize: '16px' }}>{profile?.display_name || profile?.nick}</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>@{profile?.nick}</div>
+            <div style={{ fontWeight: 700, fontSize: '17px', color: 'var(--text)' }}>{profile?.display_name || profile?.nick}</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: 2 }}>@{profile?.nick}</div>
           </div>
         </div>
 
-        <div style={{ height: 1, background: 'var(--border-glass)', margin: '0 0 20px' }} />
-
-        {/* Pontos */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
-          {[['Pontos', profile?.points || 0, 'var(--accent-gold)'], ['Placares Exatos', profile?.exact_hits || 0, 'var(--green)']].map(([label, value, color]) => (
-            <div key={label} style={{ background: 'var(--bg-glass)', borderRadius: '10px', padding: '14px 10px', textAlign: 'center' }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: '30px', color, letterSpacing: '0.04em' }}>{value}</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '4px' }}>{label}</div>
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '24px' }}>
+          {[
+            ['Pontos', profile?.points ?? 0, 'var(--gold)'],
+            ['Placares Exatos', profile?.exact_hits ?? 0, 'var(--green)'],
+          ].map(([label, value, color]) => (
+            <div key={label} style={{ background: 'var(--surface)', borderRadius: 'var(--r-md)', padding: '16px 12px', textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: '34px', color, letterSpacing: '0.04em', lineHeight: 1 }}>{value}</div>
+              <div style={{ fontSize: '10px', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '5px', fontWeight: 600 }}>{label}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ height: 1, background: 'var(--border-glass)', margin: '0 0 20px' }} />
+        <div className="divider" />
 
-        <div className="input-group" style={{ marginBottom: '16px' }}>
+        <div className="input-group" style={{ marginBottom: '16px', marginTop: '16px' }}>
           <label className="input-label">Nome de exibição</label>
-          <input className="input" value={displayName} onChange={e => setDisplayName(e.target.value)} />
+          <input className="input" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Como você quer ser chamado" />
         </div>
 
-        {msg && <div style={{ color: 'var(--green)', fontSize: '13px', textAlign: 'center', marginBottom: '12px' }}>{msg}</div>}
+        {msg && (
+          <div style={{ color: 'var(--green)', fontSize: '13px', textAlign: 'center', marginBottom: '12px', padding: '8px', background: 'var(--green-dim)', borderRadius: 'var(--r-sm)' }}>
+            {msg}
+          </div>
+        )}
 
         <button className="btn btn-primary" onClick={saveProfile} disabled={saving}>
           {saving ? 'Salvando...' : 'Salvar alterações'}
         </button>
       </div>
 
-      <button className="btn" onClick={signOut} style={{ color: 'var(--red)', borderColor: 'rgba(239,68,68,0.3)' }}>
+      <button
+        className="btn"
+        onClick={signOut}
+        style={{ color: 'var(--red)', borderColor: 'rgba(240,62,62,0.25)', background: 'var(--red-dim)' }}
+      >
         Sair da conta
       </button>
     </div>
