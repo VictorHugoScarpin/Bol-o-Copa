@@ -20,7 +20,7 @@ export default function TopHeader() {
         fontFamily: 'var(--font-display)',
         fontSize: '22px',
         letterSpacing: '0.14em',
-        background: 'linear-gradient(90deg, var(--gold) 0%, var(--gold-bright) 60%, #fff8e1 100%)',
+        background: 'linear-gradient(90deg, #00c853 0%, #f5c518 55%, #ffe566 100%)',
         WebkitBackgroundClip: 'text',
         WebkitTextFillColor: 'transparent',
         lineHeight: 1,
