@@ -8,6 +8,7 @@ const LOCK_SECS = 60
 
 // ── Mapas idênticos ao MatchesPage ──────────────────────────────────────────
 
+
 const TEAM_ISO = {
   'Brazil': 'br', 'Argentina': 'ar', 'France': 'fr', 'Germany': 'de',
   'Spain': 'es', 'England': 'gb-eng', 'Portugal': 'pt', 'Netherlands': 'nl',
