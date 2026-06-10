@@ -5,7 +5,7 @@ const NAV_ITEMS = [
   { path: '/ranking',   label: 'Ranking', icon: TrophyIcon },
   { path: '/grupos',    label: 'Grupos',  icon: TableIcon },
   { path: '/mata-mata', label: 'Chaves',  icon: BracketIcon },
-  { path: '/stats',     label: 'Stats',   icon: StatsIcon },
+  { path: '/fantasy',   label: 'Fantasy', icon: FantasyIcon },
   { path: '/perfil',    label: 'Perfil',  icon: UserIcon },
 ]
 
@@ -46,6 +46,9 @@ function BracketIcon() {
 }
 function StatsIcon() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+}
+function FantasyIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
 }
 function UserIcon() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
