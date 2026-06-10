@@ -252,7 +252,7 @@ function GuessCard({ match, myGuess, onSave }) {
         {/* Header clicável */}
         <div
           onClick={() => !finished && setExpanded(e => !e)}
-          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', cursor: finished ? 'default' : 'pointer' }}
+          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', cursor: finished ? 'default' : 'pointer', position: 'relative' }}
         >
           {/* Times no header — bolinhas em coluna vertical alinhada */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
@@ -270,11 +270,13 @@ function GuessCard({ match, myGuess, onSave }) {
                 {getPT(match.away_team)}
               </span>
             </div>
-            {/* Horário/placar */}
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: finished ? '18px' : '13px', color: finished ? 'var(--text)' : 'var(--gold)', letterSpacing: '0.04em', flexShrink: 0 }}>
-              {finished ? `${match.home_score} × ${match.away_score}` : (live ? '🔴' : cd || '–')}
-            </span>
           </div>
+            {/* Horário/placar — centralizado no card */}
+            <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: '50%', marginTop: '-10px' }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: finished ? '18px' : '13px', color: finished ? 'var(--text)' : 'var(--gold)', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
+                {finished ? `${match.home_score} × ${match.away_score}` : (live ? '🔴' : cd || '–')}
+              </span>
+            </div>
 
           {/* Badges + ações */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
