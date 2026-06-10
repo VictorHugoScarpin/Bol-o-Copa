@@ -254,30 +254,26 @@ function GuessCard({ match, myGuess, onSave }) {
           onClick={() => !finished && setExpanded(e => !e)}
           style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', cursor: finished ? 'default' : 'pointer' }}
         >
-          {/* Times no header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0 }}>
-            {/* Time casa — largura fixa para alinhar bolinha */}
-            <div style={{ width: 72, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
+          {/* Times no header — bolinhas em coluna vertical alinhada */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+            {/* Coluna das bolinhas — sempre na mesma posição X */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0 }}>
               <TeamCircle name={match.home_team} size={28} />
-              <span style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-2)', width: 72, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <TeamCircle name={match.away_team} size={28} />
+            </div>
+            {/* Coluna dos nomes */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minWidth: 0 }}>
+              <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {getPT(match.home_team)}
               </span>
-            </div>
-
-            {/* Horário/placar no centro */}
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', paddingBottom: finished ? 0 : '12px' }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: finished ? '20px' : '13px', color: finished ? 'var(--text)' : 'var(--gold)', letterSpacing: '0.04em', flexShrink: 0 }}>
-                {finished ? `${match.home_score} × ${match.away_score}` : (live ? '🔴' : cd || '–')}
-              </span>
-            </div>
-
-            {/* Time fora — largura fixa para alinhar bolinha */}
-            <div style={{ width: 72, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
-              <TeamCircle name={match.away_team} size={28} />
-              <span style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-2)', width: 72, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {getPT(match.away_team)}
               </span>
             </div>
+            {/* Horário/placar */}
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: finished ? '18px' : '13px', color: finished ? 'var(--text)' : 'var(--gold)', letterSpacing: '0.04em', flexShrink: 0 }}>
+              {finished ? `${match.home_score} × ${match.away_score}` : (live ? '🔴' : cd || '–')}
+            </span>
           </div>
 
           {/* Badges + ações */}
