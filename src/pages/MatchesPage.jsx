@@ -209,7 +209,7 @@ function CardBg({ name, side }) {
   return (
     <div style={{
       position: 'absolute', top: 0, bottom: 0, [side]: 0,
-      width: '50%', overflow: 'hidden', pointerEvents: 'none',
+      width: '55%', overflow: 'hidden', pointerEvents: 'none',
     }}>
       <img src={flagUrl} alt="" style={{
         position: 'absolute', inset: 0,
@@ -237,7 +237,7 @@ function MatchCard({ match }) {
       background: live ? 'rgba(239,68,68,0.06)' : 'rgba(255,255,255,0.04)',
       border: `1px solid ${live ? 'rgba(239,68,68,0.25)' : 'rgba(255,255,255,0.08)'}`,
       borderRadius: '14px', overflow: 'hidden', padding: '0',
-      transition: 'border-color 0.2s',
+      transition: 'border-color 0.2s', marginBottom: '8px',
     }}>
       <CardBg name={match.home_team} side="left" />
       <CardBg name={match.away_team} side="right" />
@@ -268,7 +268,7 @@ function MatchCard({ match }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '7px' }}>
             <TeamCircle name={match.home_team} size={46} />
-            <span style={{ fontSize: '11px', fontWeight: 600, textAlign: 'center', lineHeight: 1.2, color: 'var(--text)', maxWidth: '80px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, textAlign: 'center', lineHeight: 1.2, color: 'var(--text)', width: '72px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {getPT(match.home_team)}
             </span>
           </div>
@@ -294,7 +294,7 @@ function MatchCard({ match }) {
 
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '7px' }}>
             <TeamCircle name={match.away_team} size={46} />
-            <span style={{ fontSize: '11px', fontWeight: 600, textAlign: 'center', lineHeight: 1.2, color: 'var(--text)', maxWidth: '80px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, textAlign: 'center', lineHeight: 1.2, color: 'var(--text)', width: '72px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {getPT(match.away_team)}
             </span>
           </div>
@@ -415,10 +415,10 @@ export default function MatchesPage() {
 
       {tab === 'stats' ? <StatsTab /> : (
         <>
-          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '20px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
             {[['ontem', 'Ontem'], ['hoje', 'Hoje'], ['proximos', 'Próximos']].map(([key, label]) => (
               <button key={key} onClick={() => setDayTab(key)} style={{
-                flex: 1, padding: '10px 8px', border: 'none', cursor: 'pointer',
+                flexShrink: 0, flex: 1, minWidth: '80px', padding: '10px 8px', border: 'none', cursor: 'pointer',
                 fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600,
                 background: 'transparent',
                 color: dayTab === key ? 'var(--text)' : 'var(--text-3)',
