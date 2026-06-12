@@ -556,6 +556,24 @@ function RegrasTab() {
           </div>
         ))}
       </div>
+      <div className="glass-card" style={{ padding: '16px 20px' }}>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: '18px', color: 'var(--gold)', marginBottom: '14px', letterSpacing: '0.06em' }}>DESEMPATE</div>
+        {[
+          { icon: '⭐', label: 'Pontos', desc: 'Maior pontuação total' },
+          { icon: '🎯', label: 'Placares exatos', desc: 'Quem acertou mais placares certinhos' },
+          { icon: '✅', label: 'Parciais', desc: 'Quem acertou mais vencedores/empates' },
+          { icon: '🕐', label: 'Entrada no bolão', desc: 'Quem se cadastrou primeiro leva a melhor' },
+        ].map((item, i, arr) => (
+          <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '9px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
+            <span style={{ fontSize: '18px', flexShrink: 0 }}>{item.icon}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '13px', fontWeight: 600 }}>{item.label}</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-3)', marginTop: '2px' }}>{item.desc}</div>
+            </div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: 'var(--text-3)', flexShrink: 0 }}>{i + 1}º</div>
+          </div>
+        ))}
+      </div>
       <div className="glass-card" style={{ padding: '12px 16px' }}>
         <div style={{ fontSize: '12px', color: 'var(--text-3)', lineHeight: 1.7 }}>
           🔒 <strong style={{ color: 'var(--text-2)' }}>Trava de 1 minuto:</strong> palpites bloqueados automaticamente 1 minuto antes do apito inicial.
