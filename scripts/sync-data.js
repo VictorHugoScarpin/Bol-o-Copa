@@ -12,6 +12,46 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
   global: { fetch: fetch },
 })
 
+
+
+
+
+
+
+
+async function findWorldCupId() {
+  const res = await fetch('https://free-api-live-football-data.p.rapidapi.com/football-get-all-leagues', {
+    headers: {
+      'x-rapidapi-key': process.env.RAPIDAPI_KEY,
+      'x-rapidapi-host': 'free-api-live-football-data.p.rapidapi.com',
+      'Content-Type': 'application/json',
+    }
+  })
+  const json = await res.json()
+  const leagues = json?.response || json?.leagues || json || []
+  const wc = leagues.filter ? leagues.filter(l => 
+    JSON.stringify(l).toLowerCase().includes('world') || 
+    JSON.stringify(l).toLowerCase().includes('cup')
+  ) : json
+  console.log('🌍 LIGAS COPA:', JSON.stringify(wc, null, 2))
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const FLAG_MAP = {
   'Brazil':'🇧🇷','Argentina':'🇦🇷','France':'🇫🇷','Germany':'🇩🇪',
   'Spain':'🇪🇸','England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Portugal':'🇵🇹','Netherlands':'🇳🇱',
