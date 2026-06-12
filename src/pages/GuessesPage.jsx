@@ -385,33 +385,40 @@ function GuessCard({ match, myGuess, onSave }) {
 
 // ── MasterGuess ──────────────────────────────────────────────────────────────
 
-const COPA_TEAMS = [
-  { name: 'Argentina', flag: '🇦🇷' }, { name: 'Australia', flag: '🇦🇺' },
-  { name: 'Belgium', flag: '🇧🇪' }, { name: 'Bolivia', flag: '🇧🇴' },
-  { name: 'Brazil', flag: '🇧🇷' }, { name: 'Canada', flag: '🇨🇦' },
-  { name: 'Chile', flag: '🇨🇱' }, { name: 'Colombia', flag: '🇨🇴' },
-  { name: 'Costa Rica', flag: '🇨🇷' }, { name: 'Croatia', flag: '🇭🇷' },
-  { name: 'Denmark', flag: '🇩🇰' }, { name: 'Ecuador', flag: '🇪🇨' },
-  { name: 'England', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' }, { name: 'France', flag: '🇫🇷' },
-  { name: 'Germany', flag: '🇩🇪' }, { name: 'Ghana', flag: '🇬🇭' },
-  { name: 'Honduras', flag: '🇭🇳' }, { name: 'IR Iran', flag: '🇮🇷' },
-  { name: 'Japan', flag: '🇯🇵' }, { name: 'Korea Republic', flag: '🇰🇷' },
-  { name: 'Mexico', flag: '🇲🇽' }, { name: 'Morocco', flag: '🇲🇦' },
-  { name: 'Netherlands', flag: '🇳🇱' }, { name: 'New Zealand', flag: '🇳🇿' },
-  { name: 'Nigeria', flag: '🇳🇬' }, { name: 'Panama', flag: '🇵🇦' },
-  { name: 'Paraguay', flag: '🇵🇾' }, { name: 'Peru', flag: '🇵🇪' },
-  { name: 'Poland', flag: '🇵🇱' }, { name: 'Portugal', flag: '🇵🇹' },
-  { name: 'Qatar', flag: '🇶🇦' }, { name: 'Saudi Arabia', flag: '🇸🇦' },
-  { name: 'Senegal', flag: '🇸🇳' }, { name: 'Serbia', flag: '🇷🇸' },
-  { name: 'South Africa', flag: '🇿🇦' }, { name: 'Spain', flag: '🇪🇸' },
-  { name: 'Switzerland', flag: '🇨🇭' }, { name: 'United States', flag: '🇺🇸' },
-  { name: 'Uruguay', flag: '🇺🇾' }, { name: 'Venezuela', flag: '🇻🇪' },
-]
+const FLAG_LOCAL = {
+  'Argentina': '/ar.png',
+  'Bosnia and Herzegovina': '/ba.png', 'Bosnia & Herzegovina': '/ba.png',
+  'Bosnia Herzegovina': '/ba.png', 'Bosna i Hercegovina': '/ba.png',
+  'Bosnia-Herzegovina': '/ba.png', 'Jordan': '/jor.png',
+  'Korea Republic': '/cor.png', 'South Korea': '/cor.png',
+  'Uzbekistan': '/uz.png',
+}
 
-function TeamPicker({ value, onChange, placeholder, exclude }) {
+function getFlagUrl(name) {
+  if (FLAG_LOCAL[name]) return FLAG_LOCAL[name]
+  const iso = TEAM_ISO[name]
+  return iso ? `https://flagcdn.com/w160/${iso}.png` : null
+}
+
+function FlagCircle({ name, size = 28 }) {
+  const url = getFlagUrl(name)
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
+      border: '1.5px solid rgba(255,255,255,0.15)', background: 'var(--surface)',
+    }}>
+      {url
+        ? <img src={url} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none' }} />
+        : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', fontSize: size * 0.5 }}>🏳️</div>
+      }
+    </div>
+  )
+}
+
+function TeamPicker({ value, onChange, placeholder, exclude, teams }) {
   const [open, setOpen] = useState(false)
-  const selected = COPA_TEAMS.find(t => t.name === value)
-  const options = COPA_TEAMS.filter(t => t.name !== exclude)
+  const selected = teams.find(t => t.name === value)
+  const options = teams.filter(t => t.name !== exclude)
 
   return (
     <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
@@ -421,7 +428,10 @@ function TeamPicker({ value, onChange, placeholder, exclude }) {
         background: 'var(--surface)', cursor: 'pointer', fontSize: '13px',
         color: selected ? 'var(--text)' : 'var(--text-3)',
       }}>
-        {selected ? <><span style={{ fontSize: '18px' }}>{selected.flag}</span><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{TEAM_PT[selected.name] || selected.name}</span></> : placeholder}
+        {selected
+          ? <><FlagCircle name={selected.name} size={24} /><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{TEAM_PT[selected.name] || selected.name}</span></>
+          : <span>{placeholder}</span>
+        }
         <span style={{ marginLeft: 'auto', color: 'var(--text-3)', fontSize: '10px' }}>▼</span>
       </button>
       {open && (
@@ -434,14 +444,11 @@ function TeamPicker({ value, onChange, placeholder, exclude }) {
           {options.map(t => (
             <div key={t.name} onClick={() => { onChange(t.name); setOpen(false) }} style={{
               display: 'flex', alignItems: 'center', gap: '10px',
-              padding: '9px 12px', cursor: 'pointer', fontSize: '13px',
+              padding: '8px 12px', cursor: 'pointer', fontSize: '13px',
               background: value === t.name ? 'rgba(232,184,75,0.1)' : 'transparent',
               color: value === t.name ? 'var(--gold)' : 'var(--text)',
-            }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-              onMouseLeave={e => e.currentTarget.style.background = value === t.name ? 'rgba(232,184,75,0.1)' : 'transparent'}
-            >
-              <span style={{ fontSize: '20px', flexShrink: 0 }}>{t.flag}</span>
+            }}>
+              <FlagCircle name={t.name} size={26} />
               <span>{TEAM_PT[t.name] || t.name}</span>
             </div>
           ))}
@@ -456,11 +463,24 @@ function MasterGuess({ userId }) {
   const [t2, setT2] = useState('')
   const [saved, setSaved] = useState(false)
   const [existing, setExisting] = useState(null)
+  const [teams, setTeams] = useState([])
   const locked = new Date() >= new Date('2026-06-15T23:59:00')
 
   useEffect(() => {
     supabase.from('master_guess').select('*').eq('user_id', userId).single()
       .then(({ data }) => { if (data) { setExisting(data); setT1(data.team1); setT2(data.team2) } })
+
+    // Busca times únicos dos jogos
+    supabase.from('matches').select('home_team, away_team')
+      .then(({ data }) => {
+        if (!data) return
+        const set = new Set()
+        data.forEach(m => { set.add(m.home_team); set.add(m.away_team) })
+        const sorted = [...set].filter(Boolean).sort((a, b) =>
+          (TEAM_PT[a] || a).localeCompare(TEAM_PT[b] || b, 'pt')
+        ).map(name => ({ name }))
+        setTeams(sorted)
+      })
   }, [userId])
 
   async function saveMaster() {
@@ -473,8 +493,6 @@ function MasterGuess({ userId }) {
 
   const t1PT = TEAM_PT[existing?.team1] || existing?.team1
   const t2PT = TEAM_PT[existing?.team2] || existing?.team2
-  const t1Flag = COPA_TEAMS.find(t => t.name === existing?.team1)?.flag || ''
-  const t2Flag = COPA_TEAMS.find(t => t.name === existing?.team2)?.flag || ''
 
   return (
     <div className="glass-card" style={{ padding: '14px 16px', marginBottom: '18px', border: '1px solid rgba(212,168,50,0.25)' }}>
@@ -484,16 +502,27 @@ function MasterGuess({ userId }) {
         {!locked && <span style={{ marginLeft: 'auto', fontSize: '10px', color: 'rgba(232,184,75,0.6)', fontWeight: 600 }}>⚡ CHANCE RELÂMPAGO · até 15/Jun</span>}
       </div>
       <div style={{ fontSize: '11px', color: 'var(--text-3)', marginBottom: '10px', lineHeight: 1.5 }}>
-        Finalistas? Um certo = <strong style={{ color: 'var(--gold)' }}>+4pts</strong> · Dois certos = <strong style={{ color: 'var(--gold)' }}>+8pts</strong>
+        Finalistas? Um certo = <strong style={{ color: 'var(--gold)' }}>+5pts</strong> · Dois certos = <strong style={{ color: 'var(--gold)' }}>+10pts</strong>
       </div>
       {locked ? (
-        <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.04)', borderRadius: 'var(--r-sm)', fontSize: '13px', color: 'var(--text-2)', textAlign: 'center' }}>
-          🔒 {existing ? `${t1Flag} ${t1PT} × ${t2Flag} ${t2PT}` : 'Sem palpite registrado'}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '8px 12px', background: 'rgba(255,255,255,0.04)', borderRadius: 'var(--r-sm)' }}>
+          <span style={{ fontSize: '13px' }}>🔒</span>
+          {existing ? (
+            <>
+              <FlagCircle name={existing.team1} size={24} />
+              <span style={{ fontSize: '13px', color: 'var(--text-2)' }}>{t1PT}</span>
+              <span style={{ fontSize: '13px', color: 'var(--text-3)' }}>×</span>
+              <FlagCircle name={existing.team2} size={24} />
+              <span style={{ fontSize: '13px', color: 'var(--text-2)' }}>{t2PT}</span>
+            </>
+          ) : (
+            <span style={{ fontSize: '13px', color: 'var(--text-3)' }}>Sem palpite registrado</span>
+          )}
         </div>
       ) : (
         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
-          <TeamPicker value={t1} onChange={setT1} placeholder="Finalista 1" exclude={t2} />
-          <TeamPicker value={t2} onChange={setT2} placeholder="Finalista 2" exclude={t1} />
+          <TeamPicker value={t1} onChange={setT1} placeholder="Finalista 1" exclude={t2} teams={teams} />
+          <TeamPicker value={t2} onChange={setT2} placeholder="Finalista 2" exclude={t1} teams={teams} />
           <button className={`btn ${saved ? 'btn-primary' : ''}`} onClick={saveMaster} disabled={!t1 || !t2 || t1 === t2} style={{ width: 'auto', padding: '9px 14px', fontSize: '13px', flexShrink: 0 }}>
             {saved ? '✓' : 'Salvar'}
           </button>
