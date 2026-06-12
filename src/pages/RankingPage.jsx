@@ -27,8 +27,11 @@ export default function RankingPage() {
     async function fetchRanking() {
       const { data } = await supabase
         .from('profiles')
-        .select('id, display_name, nick, avatar_url, points, exact_hits, partial_hits')
+        .select('id, display_name, nick, avatar_url, points, exact_hits, partial_hits, created_at')
         .order('points', { ascending: false })
+        .order('exact_hits', { ascending: false })
+        .order('partial_hits', { ascending: false })
+        .order('created_at', { ascending: true })
       setRanking(data || [])
       setLoading(false)
     }
