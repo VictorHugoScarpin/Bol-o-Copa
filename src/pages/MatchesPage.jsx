@@ -228,7 +228,7 @@ function CardBg({ name, side }) {
 }
 
 const CAZETV_URL = 'https://cazetv.com.br/ao-vivo'
-const MATCH_DURATION_MS = 100 * 60 * 1000 // 1h40min
+const MATCH_DURATION_MS = 130 * 60 * 1000 // 2h10min
 
 function isMatchLive(match) {
   if (match.status === 'finished') return false
