@@ -84,7 +84,7 @@ const TEAM_PT = {
   'Bosna i Hercegovina': 'Bósnia e Herzegovina',
 }
 
-// Brasões fixos por seleção (Wikipedia)
+// Brasões fixos por selesção (Wikipedia)
 const TEAM_SHIELD = {
   'United States': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/United_States_Soccer_Federation_logo.svg/200px-United_States_Soccer_Federation_logo.svg.png',
   'USA': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/United_States_Soccer_Federation_logo.svg/200px-United_States_Soccer_Federation_logo.svg.png',
