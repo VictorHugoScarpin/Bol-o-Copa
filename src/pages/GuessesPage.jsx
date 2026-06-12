@@ -177,6 +177,15 @@ function countdown(dateStr) {
 
 // ── ResenhaList ──────────────────────────────────────────────────────────────
 
+function getGuessResult(g, matchHomeScore, matchAwayScore) {
+  if (matchHomeScore == null || matchAwayScore == null) return 'pending'
+  if (g.home_score === matchHomeScore && g.away_score === matchAwayScore) return 'exact'
+  const realWinner = matchHomeScore > matchAwayScore ? 'home' : matchAwayScore > matchHomeScore ? 'away' : 'draw'
+  const guessWinner = g.home_score > g.away_score ? 'home' : g.away_score > g.home_score ? 'away' : 'draw'
+  if (realWinner === guessWinner) return 'partial'
+  return 'wrong'
+}
+
 function ResenhaList({ matchId, matchHomeScore, matchAwayScore }) {
   const [guesses, setGuesses] = useState([])
   const [loading, setLoading] = useState(true)
@@ -189,14 +198,17 @@ function ResenhaList({ matchId, matchHomeScore, matchAwayScore }) {
   if (loading) return <div className="skeleton" style={{ height: 32, borderRadius: 6 }} />
   if (guesses.length === 0) return <div style={{ fontSize: '12px', color: 'var(--text-3)', textAlign: 'center', padding: '6px 0' }}>Nenhum palpite registrado.</div>
 
+  const BG = { exact: 'var(--green-dim)', partial: 'rgba(232,184,75,0.1)', wrong: 'var(--red-dim)', pending: 'rgba(255,255,255,0.04)' }
+  const COLOR = { exact: 'var(--green)', partial: 'var(--gold)', wrong: 'var(--red)', pending: 'var(--text-3)' }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
       {guesses.map(g => {
-        const ok = g.home_score === matchHomeScore && g.away_score === matchAwayScore
+        const result = getGuessResult(g, matchHomeScore, matchAwayScore)
         return (
-          <div key={g.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', borderRadius: '6px', background: ok ? 'var(--green-dim)' : 'var(--red-dim)' }}>
+          <div key={g.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', borderRadius: '6px', background: BG[result] }}>
             <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>{g.profiles?.display_name}</span>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: ok ? 'var(--green)' : 'var(--red)', letterSpacing: '0.06em' }}>{g.home_score} × {g.away_score}</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: COLOR[result], letterSpacing: '0.06em' }}>{g.home_score} × {g.away_score}</span>
           </div>
         )
       })}
@@ -538,7 +550,7 @@ export default function GuessesPage() {
 
           {/* Tabs Ontem / Todos / Hoje */}
           <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '16px' }}>
-            {[['ontem', 'Ontem'], ['todos', 'Todos'], ['hoje', 'Hoje']].map(([key, label]) => (
+            {[['todos', 'Todos'], ['hoje', 'Hoje']].map(([key, label]) => (
               <button key={key} onClick={() => setDayTab(key)} style={{
                 flex: 1, padding: '9px 8px', border: 'none', cursor: 'pointer',
                 fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600,
