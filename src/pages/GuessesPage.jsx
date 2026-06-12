@@ -543,8 +543,8 @@ function RegrasTab() {
       <div className="glass-card" style={{ padding: '16px 20px' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '18px', color: 'var(--gold)', marginBottom: '14px', letterSpacing: '0.06em' }}>PALPITE MESTRE</div>
         {[
-          { icon: '🏆', label: 'Dois finalistas certos', pts: '+8' },
-          { icon: '🥈', label: 'Um finalista certo', pts: '+4' },
+          { icon: '🏆', label: 'Dois finalistas certos', pts: '+10' },
+          { icon: '🥈', label: 'Um finalista certo', pts: '+5' },
           { icon: '❌', label: 'Errou os dois', pts: '0' },
         ].map(item => (
           <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
