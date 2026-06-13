@@ -12,7 +12,7 @@ export default function TopHeader() {
         WebkitTextFillColor: 'transparent',
         lineHeight: 1,
       }}>
-        HUGOBETS
+        NEKOMA
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
