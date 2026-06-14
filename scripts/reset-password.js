@@ -1,3 +1,4 @@
+import ws from 'ws'
 import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = process.env.SUPABASE_URL
@@ -6,11 +7,12 @@ const USER_EMAIL = process.env.USER_EMAIL
 const NOVA_SENHA = process.env.NOVA_SENHA
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-  auth: { autoRefreshToken: false, persistSession: false },
+  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  realtime: { transport: ws, params: { eventsPerSecond: -1 } },
+  global: { fetch: fetch },
 })
 
 async function main() {
-  // Buscar o usuário pelo email
   const { data: list, error: listError } = await supabase.auth.admin.listUsers()
   if (listError) {
     console.error('❌ Erro ao listar usuários:', listError.message)
