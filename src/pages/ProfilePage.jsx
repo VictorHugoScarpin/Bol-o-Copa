@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import QuizProfileCard from '../components/QuizProfileCard'
 
 export default function ProfilePage() {
   const { user, profile, signOut, fetchProfile } = useAuth()
@@ -42,6 +43,8 @@ export default function ProfilePage() {
   return (
     <div className="page">
       <div className="section-title">Perfil</div>
+
+      <QuizProfileCard userId={user.id} />
 
       <div className="glass-card" style={{ padding: '28px 24px', marginBottom: '12px' }}>
         {/* Avatar */}
