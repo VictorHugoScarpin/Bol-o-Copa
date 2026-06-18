@@ -33,7 +33,10 @@ function IntroScreen({ onStart, alreadyDone }) {
     <div className="page">
       <div className="section-title">Quiz da Copa</div>
       <div className="glass-card" style={{ padding: 24, textAlign: 'center' }}>
-        <div style={{ fontSize: 40, marginBottom: 12 }}>⚽🎵</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 12 }}>
+          <img src="/taca.png" alt="Copa" style={{ width: 48, height: 48, objectFit: 'contain' }} />
+          <img src="/spot.png" alt="Spotify" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+        </div>
         <div style={{ fontWeight: 700, fontSize: 17, color: 'var(--text)', marginBottom: 10 }}>
           15 perguntas sobre a Copa do Mundo
         </div>
