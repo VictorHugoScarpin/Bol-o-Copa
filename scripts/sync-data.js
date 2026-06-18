@@ -157,7 +157,6 @@ async function syncScorers() {
 
   if (scorers.length === 0) { console.log('⚠️ Sem artilheiros ainda.'); return }
 
-  // Limpar e reinserir
   await supabase.from('top_scorers').delete().neq('id', '00000000-0000-0000-0000-000000000000')
 
   let salvos = 0
@@ -166,11 +165,12 @@ async function syncScorers() {
       player_name: s.player.name,
       team_name: s.team.name,
       flag_emoji: FLAG_MAP[s.team.name] || '🏳️',
-      goals: s.goals || 0,
-      assists: s.assists || 0,
-      photo_url: s.player.photo || null,
+      goals: s.goals ?? 0,
+      assists: s.assists ?? 0,
+      photo_url: s.team.crest || null,
     })
     if (!error) salvos++
+    else console.error('scorer error:', error.message)
   }
   console.log(`✅ Artilheiros: ${salvos} salvos`)
 }
@@ -183,9 +183,9 @@ async function syncAssists() {
 
   if (scorers.length === 0) { console.log('⚠️ Sem dados ainda.'); return }
 
-  // Filtrar só quem tem assistências
-  const withAssists = scorers.filter(s => (s.assists || 0) > 0)
-    .sort((a, b) => (b.assists || 0) - (a.assists || 0))
+  const withAssists = scorers
+    .filter(s => (s.assists ?? 0) > 0)
+    .sort((a, b) => (b.assists ?? 0) - (a.assists ?? 0))
 
   await supabase.from('top_assists').delete().neq('id', '00000000-0000-0000-0000-000000000000')
 
@@ -195,11 +195,12 @@ async function syncAssists() {
       player_name: s.player.name,
       team_name: s.team.name,
       flag_emoji: FLAG_MAP[s.team.name] || '🏳️',
-      assists: s.assists || 0,
-      goals: s.goals || 0,
-      photo_url: s.player.photo || null,
+      assists: s.assists ?? 0,
+      goals: s.goals ?? 0,
+      photo_url: s.team.crest || null,
     })
     if (!error) salvos++
+    else console.error('assist error:', error.message)
   }
   console.log(`✅ Assistências: ${salvos} salvos`)
 }
@@ -209,12 +210,6 @@ async function main() {
   try {
     await syncMatches()
     await syncStandings()
-
-
-    
-    await debugScorers()
-
-    
     await syncScorers()
     await syncAssists()
     console.log('🏆 Sincronização completa!')
@@ -225,8 +220,3 @@ async function main() {
 }
 
 main()
-
-async function debugScorers() {
-  const data = await apiRequest('/competitions/WC/scorers?season=2026&limit=20')
-  console.log('DEBUG SCORERS:', JSON.stringify(data).substring(0, 2000))
-}
