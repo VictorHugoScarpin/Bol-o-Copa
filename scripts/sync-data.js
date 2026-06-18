@@ -186,10 +186,10 @@ async function syncScorers() {
   for (const s of scorers) {
     const { error } = await supabase.from('top_scorers').insert({
       player_name: s.player.name,
-      team_name: TEAM_PT[s.team.name] || s.team.name,
+      team_name: s.team.name,
       flag_emoji: FLAG_MAP[s.team.name] || '🏳️',
       goals: s.goals ?? 0,
-      photo_url: s.team.crest || null,
+      photo_url: null,
     })
     if (!error) salvos++
     else console.error('scorer error:', error.message)
@@ -215,10 +215,10 @@ async function syncAssists() {
   for (const s of withAssists) {
     const { error } = await supabase.from('top_assists').insert({
       player_name: s.player.name,
-      team_name: TEAM_PT[s.team.name] || s.team.name,
+      team_name: s.team.name,
       flag_emoji: FLAG_MAP[s.team.name] || '🏳️',
       assists: s.assists ?? 0,
-      photo_url: s.team.crest || null,
+      photo_url: null,
     })
     if (!error) salvos++
     else console.error('assist error:', error.message)
