@@ -199,6 +199,36 @@ function TeamCircle({ name, size = 46 }) {
   )
 }
 
+// Bolinha do jogador: mostra a foto (photo_url); se não tiver ou der erro, cai pra bandeira
+function PlayerCircle({ team, photoUrl, size = 36 }) {
+  const [imgError, setImgError] = useState(false)
+  const flagUrl = getFlagUrl(team)
+  const showPhoto = !!photoUrl && !imgError
+
+  return (
+    <div style={{
+      width: size, height: size,
+      borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
+      border: '2px solid rgba(255,255,255,0.18)',
+      background: 'var(--surface)',
+    }}>
+      {showPhoto ? (
+        <img
+          src={photoUrl}
+          alt={team}
+          referrerPolicy="no-referrer"
+          onError={() => setImgError(true)}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      ) : flagUrl ? (
+        <img src={flagUrl} alt={team} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', fontSize: size * 0.42 }}>🏳️</div>
+      )}
+    </div>
+  )
+}
+
 // Fundo do card: bandeira preenchendo cada lado, com fade no centro
 function CardBg({ name, side }) {
   const flagUrl = getFlagUrl(name)
@@ -372,7 +402,7 @@ function StatsTab() {
           : data.map((p, i) => (
             <div key={p.id} className="glass-card" style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
               <div style={{ width: 24, textAlign: 'center', fontFamily: 'var(--font-display)', fontSize: '16px', color: i < 3 ? 'var(--gold)' : 'var(--text-3)', flexShrink: 0 }}>{i < 3 ? MEDALS[i] : `${i + 1}º`}</div>
-              <TeamCircle name={p.team_name} size={36} />
+              <PlayerCircle team={p.team_name} photoUrl={p.photo_url} size={36} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '14px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.player_name}</div>
                 <div style={{ fontSize: '12px', color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: '4px' }}>
