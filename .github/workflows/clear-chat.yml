@@ -1,10 +1,7 @@
 name: Clear Chat
 
 on:
-  schedule:
-    # 3:30 BRT = 6:30 UTC (Brasil é UTC-3)
-    - cron: '30 6 * * *'
-  workflow_dispatch:
+  workflow_dispatch: # Mantém apenas o botão manual
 
 jobs:
   clear:
