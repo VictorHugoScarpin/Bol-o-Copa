@@ -10,17 +10,19 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
   global: { fetch: fetch },
 })
 
-async function main() {
-  const { error, count } = await supabase
+async function clearChat() {
+  const { error } = await supabase
     .from('chat_messages')
     .delete()
     .neq('id', '00000000-0000-0000-0000-000000000000')
 
   if (error) {
     console.error('❌ Erro ao limpar chat:', error.message)
-    process.exit(1)
+    process.exit(1) // Avisa ao GitHub Actions que deu erro
   }
+  
   console.log('✅ Chat limpo com sucesso!')
 }
 
-main()
+// Executa a função, pois este arquivo será chamado apenas pelo GitHub Actions
+clearChat()
