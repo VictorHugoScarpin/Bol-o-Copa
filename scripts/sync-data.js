@@ -4,6 +4,29 @@ import { createClient } from '@supabase/supabase-js'
 const SUPABASE_URL = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 const FOOTBALL_API_KEY = process.env.FOOTBALL_API_KEY
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY
+
+const TEAM_PT = {
+  'Brazil':'Brasil','Argentina':'Argentina','France':'França','Germany':'Alemanha',
+  'Spain':'Espanha','England':'Inglaterra','Portugal':'Portugal','Netherlands':'Holanda',
+  'Italy':'Itália','Uruguay':'Uruguai','Colombia':'Colômbia','Mexico':'México',
+  'United States':'EUA','USA':'EUA','Canada':'Canadá','Japan':'Japão',
+  'South Korea':'Coreia do Sul','Korea Republic':'Coreia do Sul','Morocco':'Marrocos',
+  'Senegal':'Senegal','Ghana':'Gana','Nigeria':'Nigéria','Australia':'Austrália',
+  'Saudi Arabia':'Arábia Saudita','Iran':'Irã','IR Iran':'Irã','Qatar':'Catar',
+  'Croatia':'Croácia','Serbia':'Sérvia','Switzerland':'Suíça','Belgium':'Bélgica',
+  'Denmark':'Dinamarca','Poland':'Polônia','Cameroon':'Camarões','Ecuador':'Equador',
+  'Tunisia':'Tunísia','Costa Rica':'Costa Rica','Wales':'País de Gales',
+  'Chile':'Chile','Peru':'Peru','Paraguay':'Paraguai','Venezuela':'Venezuela',
+  'Bolivia':'Bolívia','Austria':'Áustria','Turkey':'Turquia','Ukraine':'Ucrânia',
+  'Honduras':'Honduras','Panama':'Panamá','Jamaica':'Jamaica',
+  'Slovakia':'Eslováquia','Romania':'Romênia','Hungary':'Hungria',
+  'Czechia':'Rep. Tcheca','Slovenia':'Eslovênia','Algeria':'Argélia',
+  'Egypt':'Egito','New Zealand':'Nova Zelândia',"Côte d'Ivoire":'Costa do Marfim',
+  'South Africa':'África do Sul','Bosnia and Herzegovina':'Bósnia','Scotland':'Escócia',
+  'Uzbekistan':'Uzbequistão','Jordan':'Jordânia','Iraq':'Iraque',
+  'Sweden':'Suécia','Norway':'Noruega','Albania':'Albânia',
+}
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
@@ -152,21 +175,33 @@ async function syncStandings() {
 // ── 3. ARTILHEIROS ──────────────────────────────────────────────────────────
 async function syncScorers() {
   console.log('⚽ Sincronizando artilheiros...')
-  const data = await apiRequest('/competitions/WC/scorers?season=2026&limit=20')
-  const scorers = data.scorers || []
+  const res = await fetch('https://free-api-live-football-data.p.rapidapi.com/football-get-top-players-by-goals?leagueid=77', {
+    headers: {
+      'x-rapidapi-key': RAPIDAPI_KEY,
+      'x-rapidapi-host': 'free-api-live-football-data.p.rapidapi.com',
+    }
+  })
+  const json = await res.json()
+  console.log('SCORERS RAW:', JSON.stringify(json).substring(0, 500))
+  const players = json?.response?.topPlayers || json?.response?.players || json?.response || []
 
-  if (scorers.length === 0) { console.log('⚠️ Sem artilheiros ainda.'); return }
+  if (!players.length) { console.log('⚠️ Sem artilheiros ainda.'); return }
 
   await supabase.from('top_scorers').delete().neq('id', '00000000-0000-0000-0000-000000000000')
 
   let salvos = 0
-  for (const s of scorers) {
+  for (const p of players.slice(0, 20)) {
+    const name = p.name || p.shortName || p.playerName || ''
+    const teamName = p.teamName || p.team?.name || ''
+    const goals = p.goals || p.goal || p.stat || 0
+    const photo = p.imageUrl || p.photo || p.playerImage || null
+
     const { error } = await supabase.from('top_scorers').insert({
-      player_name: s.player.name,
-      team_name: s.team.name,
-      flag_emoji: FLAG_MAP[s.team.name] || '🏳️',
-      goals: s.goals ?? 0,
-      photo_url: s.team.crest || null,
+      player_name: name,
+      team_name: TEAM_PT[teamName] || teamName,
+      flag_emoji: FLAG_MAP[teamName] || '🏳️',
+      goals,
+      photo_url: photo,
     })
     if (!error) salvos++
     else console.error('scorer error:', error.message)
@@ -177,25 +212,33 @@ async function syncScorers() {
 // ── 4. ASSISTÊNCIAS ─────────────────────────────────────────────────────────
 async function syncAssists() {
   console.log('👟 Sincronizando assistências...')
-  const data = await apiRequest('/competitions/WC/scorers?season=2026&limit=20')
-  const scorers = data.scorers || []
+  const res = await fetch('https://free-api-live-football-data.p.rapidapi.com/football-get-top-players-by-assists?leagueid=77', {
+    headers: {
+      'x-rapidapi-key': RAPIDAPI_KEY,
+      'x-rapidapi-host': 'free-api-live-football-data.p.rapidapi.com',
+    }
+  })
+  const json = await res.json()
+  console.log('ASSISTS RAW:', JSON.stringify(json).substring(0, 500))
+  const players = json?.response?.topPlayers || json?.response?.players || json?.response || []
 
-  if (scorers.length === 0) { console.log('⚠️ Sem dados ainda.'); return }
-
-  const withAssists = scorers
-    .filter(s => (s.assists ?? 0) > 0)
-    .sort((a, b) => (b.assists ?? 0) - (a.assists ?? 0))
+  if (!players.length) { console.log('⚠️ Sem assistências ainda.'); return }
 
   await supabase.from('top_assists').delete().neq('id', '00000000-0000-0000-0000-000000000000')
 
   let salvos = 0
-  for (const s of withAssists) {
+  for (const p of players.slice(0, 20)) {
+    const name = p.name || p.shortName || p.playerName || ''
+    const teamName = p.teamName || p.team?.name || ''
+    const assists = p.assists || p.assist || p.stat || 0
+    const photo = p.imageUrl || p.photo || p.playerImage || null
+
     const { error } = await supabase.from('top_assists').insert({
-      player_name: s.player.name,
-      team_name: s.team.name,
-      flag_emoji: FLAG_MAP[s.team.name] || '🏳️',
-      assists: s.assists ?? 0,
-      photo_url: s.team.crest || null,
+      player_name: name,
+      team_name: TEAM_PT[teamName] || teamName,
+      flag_emoji: FLAG_MAP[teamName] || '🏳️',
+      assists,
+      photo_url: photo,
     })
     if (!error) salvos++
     else console.error('assist error:', error.message)
