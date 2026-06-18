@@ -8,17 +8,15 @@ import GroupsPage from './pages/GroupsPage'
 import BracketPage from './pages/BracketPage'
 import ProfilePage from './pages/ProfilePage'
 import HallPage from './pages/HallPage'
-import ClassificacaoPage from './pages/ClassificacaoPage'
 import TopHeader from './components/TopHeader'
 import './index.css'
 
 const NAV_ITEMS = [
-  { path: '/',               label: 'Jogos',    icon: HomeIcon },
-  { path: '/palpites',       label: 'Palpites', icon: BallIcon },
-  { path: '/ranking',        label: 'Ranking',  icon: TrophyIcon },
-  { path: '/classificacao',  label: 'Classif.', icon: TableIcon },
-  { path: '/hall',           label: 'Hall',     icon: HallIcon },
-  { path: '/perfil',         label: 'Perfil',   icon: UserIcon },
+  { path: '/',         label: 'Jogos',    icon: HomeIcon },
+  { path: '/palpites', label: 'Palpites', icon: BallIcon },
+  { path: '/ranking',  label: 'Ranking',  icon: TrophyIcon },
+  { path: '/hall',     label: 'Hall',     icon: HallIcon },
+  { path: '/perfil',   label: 'Perfil',   icon: UserIcon },
 ]
 
 function SideNav() {
@@ -70,7 +68,6 @@ function AppRoutes() {
           <Route path="/ranking"   element={<RankingPage />} />
           <Route path="/hall"      element={<HallPage />} />
           <Route path="/perfil"    element={<ProfilePage />} />
-          <Route path="/classificacao" element={<ClassificacaoPage />} />
           {/* Rotas ocultas da nav mas ainda acessíveis */}
           <Route path="/grupos"    element={<GroupsPage />} />
           <Route path="/mata-mata" element={<BracketPage />} />
