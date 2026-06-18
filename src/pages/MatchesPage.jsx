@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../hooks/useAuth'
 import { format, parseISO, startOfDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -389,59 +388,6 @@ function StatsTab() {
   )
 }
 
-// Caixa para a pessoa dizer quem a indicou pro bolão
-function ReferralBox() {
-  const { user, profile, fetchProfile } = useAuth()
-  const [value, setValue] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-
-  // Já respondeu — não mostra nada
-  if (!profile || profile.referred_by) return null
-
-  async function handleSave() {
-    if (!value.trim() || saving) return
-    setSaving(true)
-    await supabase.from('profiles').update({ referred_by: value.trim() }).eq('id', user.id)
-    await fetchProfile(user.id)
-    setSaving(false)
-    setSaved(true)
-  }
-
-  if (saved) return null
-
-  return (
-    <div style={{
-      background: 'rgba(240,62,62,0.08)', border: '1px solid rgba(240,62,62,0.3)',
-      borderRadius: '12px', padding: '12px 14px', marginBottom: '14px',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-        <span style={{ fontSize: '15px' }}>📋</span>
-        <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--red)' }}>
-          Por quem você veio? Quem te indicou pro bolão?
-        </span>
-      </div>
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <input
-          className="input"
-          value={value}
-          onChange={e => setValue(e.target.value)}
-          placeholder="Nome de quem te chamou"
-          style={{ flex: 1, padding: '9px 10px', fontSize: '13px' }}
-        />
-        <button
-          onClick={handleSave}
-          disabled={!value.trim() || saving}
-          className="btn btn-primary"
-          style={{ width: 'auto', padding: '9px 16px', fontSize: '13px', flexShrink: 0 }}
-        >
-          {saving ? '...' : 'Enviar'}
-        </button>
-      </div>
-    </div>
-  )
-}
-
 export default function MatchesPage() {
   const [matches, setMatches] = useState([])
   const [loading, setLoading] = useState(true)
@@ -481,8 +427,6 @@ export default function MatchesPage() {
         <span style={{ flexShrink: 0 }}>⏱️</span>
         <span>Os resultados dependem de uma API externa e podem demorar alguns minutos para atualizar.</span>
       </div>
-
-      <ReferralBox />
       <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '4px', marginBottom: '16px', gap: '4px' }}>
         {[['jogos', '⚽ Jogos'], ['stats', '📊 Artilheiros']].map(([key, label]) => (
           <button key={key} onClick={() => setTab(key)} style={{ flex: 1, padding: '9px', borderRadius: '9px', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600, transition: 'all 0.2s', background: tab === key ? 'rgba(255,255,255,0.1)' : 'transparent', color: tab === key ? 'var(--text)' : 'var(--text-3)' }}>{label}</button>
