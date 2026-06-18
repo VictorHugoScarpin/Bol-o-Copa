@@ -37,7 +37,7 @@ export default function QuizProfileCard({ userId }) {
   return (
     <div className="glass-card" style={{ padding: 16, marginBottom: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: isWinner ? 14 : 0 }}>
-        <span style={{ fontSize: 22 }}>⚽🎵</span>
+        <img src="/taca.png" alt="Quiz" style={{ width: 30, height: 30, objectFit: 'contain', flexShrink: 0 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>Quiz da Copa</div>
           <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>
@@ -53,7 +53,7 @@ export default function QuizProfileCard({ userId }) {
 
       {isWinner && (
         <div style={{ background: 'rgba(232,184,75,0.08)', border: '1px solid rgba(232,184,75,0.3)', borderRadius: 'var(--r-md)', padding: '14px', textAlign: 'center' }}>
-          <div style={{ fontSize: 24, marginBottom: 6 }}>🏆</div>
+          <img src="/taca.png" alt="Vencedor" style={{ width: 44, height: 44, objectFit: 'contain', marginBottom: 6 }} />
           <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--gold-bright)', marginBottom: 4 }}>
             Parabéns, você ganhou!
           </div>
@@ -65,9 +65,10 @@ export default function QuizProfileCard({ userId }) {
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-primary"
-            style={{ display: 'block', textDecoration: 'none', textAlign: 'center' }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}
           >
-            🎁 Resgatar 3 meses de Spotify
+            <img src="/spot.png" alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
+            Resgatar 3 meses de Spotify
           </a>
         </div>
       )}
