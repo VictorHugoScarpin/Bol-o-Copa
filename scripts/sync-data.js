@@ -166,7 +166,6 @@ async function syncScorers() {
       team_name: s.team.name,
       flag_emoji: FLAG_MAP[s.team.name] || '🏳️',
       goals: s.goals ?? 0,
-      assists: s.assists ?? 0,
       photo_url: s.team.crest || null,
     })
     if (!error) salvos++
@@ -196,7 +195,6 @@ async function syncAssists() {
       team_name: s.team.name,
       flag_emoji: FLAG_MAP[s.team.name] || '🏳️',
       assists: s.assists ?? 0,
-      goals: s.goals ?? 0,
       photo_url: s.team.crest || null,
     })
     if (!error) salvos++
