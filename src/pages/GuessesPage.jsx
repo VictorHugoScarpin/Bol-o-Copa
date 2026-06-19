@@ -593,6 +593,7 @@ export default function GuessesPage() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('palpites')
   const [dayTab, setDayTab] = useState('hoje')
+  const [expandedDays, setExpandedDays] = useState({})
 
   const fetchData = useCallback(async () => {
     const [{ data: mData }, { data: myData }] = await Promise.all([
@@ -617,9 +618,9 @@ export default function GuessesPage() {
   const filteredMatches = (() => {
     const todayStart = startOfDay(new Date())
     const todayEnd = new Date(todayStart.getTime() + 86400000)
-    const yesterdayStart = new Date(todayStart.getTime() - 86400000)
-    if (dayTab === 'ontem') return matches.filter(m => { const d = parseISO(m.match_date); return d >= yesterdayStart && d < todayStart })
+    const tomorrowEnd = new Date(todayStart.getTime() + 2 * 86400000)
     if (dayTab === 'hoje') return matches.filter(m => { const d = parseISO(m.match_date); return d >= todayStart && d < todayEnd })
+    if (dayTab === 'amanha') return matches.filter(m => { const d = parseISO(m.match_date); return d >= todayEnd && d < tomorrowEnd })
     return matches
   })()
 
@@ -657,9 +658,9 @@ export default function GuessesPage() {
         <>
           <MasterGuess userId={user.id} />
 
-          {/* Tabs Ontem / Todos / Hoje */}
+          {/* Tabs Hoje / Todos / Amanhã */}
           <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '16px' }}>
-            {[['ontem', 'Ontem'], ['todos', 'Todos'], ['hoje', 'Hoje']].map(([key, label]) => (
+            {[['hoje', 'Hoje'], ['todos', 'Todos'], ['amanha', 'Amanhã']].map(([key, label]) => (
               <button key={key} onClick={() => setDayTab(key)} style={{
                 flex: 1, padding: '9px 8px', border: 'none', cursor: 'pointer',
                 fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600,
@@ -675,16 +676,38 @@ export default function GuessesPage() {
             ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton" style={{ height: 56, marginBottom: 8, borderRadius: 12 }} />)
             : filteredMatches.length === 0
               ? <div style={{ textAlign: 'center', color: 'var(--text-3)', padding: '40px 0' }}>
-                  {dayTab === 'ontem' ? 'Nenhum jogo ontem.' : dayTab === 'hoje' ? 'Nenhum jogo hoje.' : 'Nenhum jogo cadastrado.'}
+                  {dayTab === 'hoje' ? 'Nenhum jogo hoje.' : dayTab === 'amanha' ? 'Nenhum jogo amanhã.' : 'Nenhum jogo cadastrado.'}
                 </div>
-              : Object.entries(grouped).map(([date, dayMatches]) => (
-                <div key={date}>
-                  <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--gold)', textTransform: 'capitalize', letterSpacing: '0.08em', marginBottom: '8px', marginTop: '16px' }}>{date}</div>
-                  {dayMatches.map(m => (
-                    <GuessCard key={m.id} match={m} myGuess={myGuesses[m.id]} onSave={handleSave} />
-                  ))}
-                </div>
-              ))
+              : Object.entries(grouped).map(([date, dayMatches]) => {
+                  // Auto-expand today's group; others default collapsed in 'todos' tab
+                  const isExpanded = expandedDays[date] !== undefined
+                    ? expandedDays[date]
+                    : (dayTab !== 'todos' || date === format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR }))
+
+                  return (
+                    <div key={date}>
+                      <div
+                        onClick={() => setExpandedDays(prev => ({ ...prev, [date]: !isExpanded }))}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          fontSize: '11px', fontWeight: 700, color: 'var(--gold)',
+                          textTransform: 'capitalize', letterSpacing: '0.08em',
+                          marginBottom: isExpanded ? '8px' : '4px', marginTop: '16px',
+                          cursor: 'pointer', userSelect: 'none',
+                          padding: '4px 0',
+                        }}
+                      >
+                        <span>{date}</span>
+                        <span style={{ fontSize: '10px', color: 'var(--text-3)', marginLeft: '8px' }}>
+                          {isExpanded ? '▲' : `▼ ${dayMatches.length} jogo${dayMatches.length > 1 ? 's' : ''}`}
+                        </span>
+                      </div>
+                      {isExpanded && dayMatches.map(m => (
+                        <GuessCard key={m.id} match={m} myGuess={myGuesses[m.id]} onSave={handleSave} />
+                      ))}
+                    </div>
+                  )
+                })
           }
         </>
       )}
