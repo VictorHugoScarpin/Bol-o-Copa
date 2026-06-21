@@ -427,8 +427,9 @@ function TeamFilterSheet({ allTeams, selected, onToggle, onClose, onClear }) {
     <div
       onClick={onClose}
       style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
-        zIndex: 200, display: 'flex', alignItems: 'flex-end',
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+        background: 'rgba(0,0,0,0.6)',
+        zIndex: 9999, display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
         animation: 'fadeUp 0.2s ease',
       }}
     >
@@ -436,17 +437,20 @@ function TeamFilterSheet({ allTeams, selected, onToggle, onClose, onClear }) {
         onClick={e => e.stopPropagation()}
         style={{
           background: 'var(--deep)', borderRadius: '20px 20px 0 0',
-          width: '100%', maxHeight: '75vh', display: 'flex', flexDirection: 'column',
+          width: '100%', maxWidth: '480px',
+          height: '75vh', maxHeight: '75vh',
+          display: 'flex', flexDirection: 'column',
           border: '1px solid var(--border)', borderBottom: 'none',
+          overflow: 'hidden',
         }}
       >
         {/* Handle */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px', flexShrink: 0 }}>
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border-strong)' }} />
         </div>
 
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 18px 14px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 18px 14px', flexShrink: 0 }}>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: '20px', letterSpacing: '0.06em', color: 'var(--text)' }}>
             Filtrar Seleções
           </div>
@@ -457,8 +461,8 @@ function TeamFilterSheet({ allTeams, selected, onToggle, onClose, onClear }) {
           )}
         </div>
 
-        {/* Lista de seleções */}
-        <div style={{ overflowY: 'auto', padding: '0 12px 12px' }}>
+        {/* Lista de seleções — flex:1 + minHeight:0 é o que força o scroll a respeitar o espaço disponível */}
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '0 12px 12px' }}>
           {allTeams.map(team => {
             const isSelected = selected.includes(team)
             return (
@@ -489,8 +493,8 @@ function TeamFilterSheet({ allTeams, selected, onToggle, onClose, onClear }) {
           })}
         </div>
 
-        {/* Botão aplicar */}
-        <div style={{ padding: '12px 18px', paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))', borderTop: '1px solid var(--border)' }}>
+        {/* Botão aplicar — flexShrink:0 garante que nunca é espremido pra fora */}
+        <div style={{ flexShrink: 0, padding: '12px 18px', paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))', borderTop: '1px solid var(--border)' }}>
           <button className="btn btn-primary" onClick={onClose}>
             Ver jogos {selected.length > 0 ? `(${selected.length} seleções)` : ''}
           </button>
