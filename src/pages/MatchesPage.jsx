@@ -446,32 +446,31 @@ function TeamFilterSheet({ allTeams, selected, onToggle, onClose, onClear }) {
         style={{
           background: 'var(--deep)', borderRadius: '20px 20px 0 0',
           width: '100%', maxWidth: '480px',
-          height: '75vh', maxHeight: '75vh',
-          display: 'flex', flexDirection: 'column',
+          height: '70vh',
           border: '1px solid var(--border)', borderBottom: 'none',
-          overflow: 'hidden',
           position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        {/* Handle */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px', flexShrink: 0 }}>
-          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border-strong)' }} />
-        </div>
-
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 18px 14px', flexShrink: 0 }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: '20px', letterSpacing: '0.06em', color: 'var(--text)' }}>
-            Filtrar Seleções
+        {/* Header fixo no topo absoluto */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '64px', zIndex: 2, background: 'var(--deep)' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px' }}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border-strong)' }} />
           </div>
-          {selected.length > 0 && (
-            <button onClick={onClear} style={{ background: 'none', border: 'none', color: 'var(--gold)', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
-              Limpar ({selected.length})
-            </button>
-          )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 18px 0' }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '20px', letterSpacing: '0.06em', color: 'var(--text)' }}>
+              Filtrar Seleções
+            </div>
+            {selected.length > 0 && (
+              <button onClick={onClear} style={{ background: 'none', border: 'none', color: 'var(--gold)', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
+                Limpar ({selected.length})
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Lista de seleções — flex:1 + minHeight:0 é o que força o scroll a respeitar o espaço disponível */}
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '0 12px 12px' }}>
+        {/* Lista — posicionada absoluta entre header e footer, com altura travada por top/bottom */}
+        <div style={{ position: 'absolute', top: '64px', left: 0, right: 0, bottom: '76px', overflowY: 'auto', padding: '4px 12px 12px' }}>
           {allTeams.map(team => {
             const isSelected = selected.includes(team)
             return (
@@ -502,8 +501,8 @@ function TeamFilterSheet({ allTeams, selected, onToggle, onClose, onClear }) {
           })}
         </div>
 
-        {/* Botão aplicar — flexShrink:0 garante que nunca é espremido pra fora */}
-        <div style={{ flexShrink: 0, padding: '12px 18px', paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))', borderTop: '1px solid var(--border)' }}>
+        {/* Footer fixo no fundo absoluto — nunca se move */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '76px', zIndex: 2, background: 'var(--deep)', padding: '12px 18px', paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))', borderTop: '1px solid var(--border)' }}>
           <button className="btn btn-primary" onClick={onClose}>
             Ver jogos {selected.length > 0 ? `(${selected.length} seleções)` : ''}
           </button>
