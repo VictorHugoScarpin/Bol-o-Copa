@@ -35,7 +35,6 @@ export default function QuizProfileCard({ userId }) {
   async function passToNext() {
     if (!confirm('Tem certeza? O prêmio vai para o segundo colocado e não dá pra desfazer.')) return
     setPassing(true)
-    // Seta o winner_id como o segundo colocado (OFFSET 1 ignora o primeiro)
     const { data: second } = await supabase
       .from('quiz_attempts')
       .select('user_id')
@@ -87,8 +86,8 @@ export default function QuizProfileCard({ userId }) {
           <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 12, lineHeight: 1.5 }}>
             Lembrando: o prêmio só vale se você nunca teve Spotify Premium antes.
           </div>
-          
-           href={SPOTIFY_GIFT_LINK}
+          <a
+            href={SPOTIFY_GIFT_LINK}
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-primary"
