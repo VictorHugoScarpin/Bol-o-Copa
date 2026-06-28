@@ -738,7 +738,7 @@ function useOpponentGuesses(opponentId, phase, matches) {
 
     const phaseMatchIds = matches
       .filter(m => {
-        const d = new Date(String(m.match_date).replace(' ', 'T'))
+        const d = new Date(m.match_date)
         return d >= start && d <= end
       })
       .map(m => m.id)
@@ -800,7 +800,7 @@ function AdversarioTab({ myProfile, bracket, matches, currentPhaseIdx }) {
       const pts = (data || []).filter(g => {
         const md = g.matches?.match_date
         if (!md) return false
-        const d = new Date(String(md).replace(' ', 'T'))
+        const d = new Date(md)
         return d >= start && d <= end && g.matches?.status === 'finished'
       }).reduce((s, g) => s + (g.points_earned || 0), 0)
       setter(pts)
@@ -815,7 +815,7 @@ function AdversarioTab({ myProfile, bracket, matches, currentPhaseIdx }) {
     const start = new Date(phase.start + 'T00:00:00')
     const end = new Date(phase.end + 'T23:59:59')
     return matches.filter(m => {
-      const d = new Date(String(m.match_date).replace(' ', 'T'))
+      const d = new Date(m.match_date)
       return d >= start && d <= end
     }).sort((a, b) => new Date(a.match_date) - new Date(b.match_date))
   }, [matches, phase])
@@ -918,28 +918,27 @@ function AdversarioTab({ myProfile, bracket, matches, currentPhaseIdx }) {
           const finished = m.status === 'finished'
           const showGuess = matchStarted // só mostra depois que começou
 
-          // Lógica de cor: azul=qualifier, verde=exato, amarelo=parcial, vermelho=errou
-          const qualifierHit = finished && g && m.qualifier_result && g.qualifier_guess === m.qualifier_result
-          const isExact = finished && g && g.home_score === m.home_score && g.away_score === m.away_score
-          const isPartial = finished && g && !isExact && (() => {
-            const rw = m.home_score > m.away_score ? 'home' : m.away_score > m.home_score ? 'away' : 'draw'
-            const gw = g.home_score > g.away_score ? 'home' : g.away_score > g.home_score ? 'away' : 'draw'
-            return rw === gw
-          })()
+          // Cor baseada direto no points_earned (já calculado corretamente pelo trigger)
+          const isKo = new Date(String(m.match_date).replace(' ', 'T')) >= new Date('2026-06-28T00:00:00Z')
+          const pts = g?.points_earned ?? 0
+          // Azul: knockout com pts>1 (tem bônus qualifier); Verde: exato (3pt) sem qualifier; Amarelo: 1pt; Vermelho: 0pt
+          const hasBlueCard = finished && g && isKo && pts > 1
           const cardBg = !finished ? 'var(--surface)'
-            : qualifierHit ? 'rgba(59,130,246,0.06)'
-            : isExact ? 'rgba(34,197,94,0.06)'
-            : isPartial ? 'rgba(232,184,75,0.06)'
-            : g ? 'rgba(239,68,68,0.06)' : 'var(--surface)'
+            : !g ? 'var(--surface)'
+            : hasBlueCard ? 'rgba(59,130,246,0.06)'
+            : pts === 3 ? 'rgba(34,197,94,0.06)'
+            : pts === 1 ? 'rgba(232,184,75,0.06)'
+            : 'rgba(239,68,68,0.06)'
           const cardBorder = !finished ? 'var(--border)'
-            : qualifierHit ? 'rgba(59,130,246,0.35)'
-            : isExact ? 'rgba(34,197,94,0.35)'
-            : isPartial ? 'rgba(232,184,75,0.35)'
-            : g ? 'rgba(239,68,68,0.3)' : 'var(--border)'
+            : !g ? 'var(--border)'
+            : hasBlueCard ? 'rgba(59,130,246,0.35)'
+            : pts === 3 ? 'rgba(34,197,94,0.35)'
+            : pts === 1 ? 'rgba(232,184,75,0.35)'
+            : 'rgba(239,68,68,0.3)'
           const guessColor = !finished ? '#c084fc'
-            : qualifierHit ? '#60a5fa'
-            : isExact ? 'var(--green)'
-            : isPartial ? 'var(--gold)'
+            : hasBlueCard ? '#60a5fa'
+            : pts === 3 ? 'var(--green)'
+            : pts === 1 ? 'var(--gold)'
             : 'var(--red)'
 
           return (
