@@ -314,11 +314,27 @@ function MatchCard({ match }) {
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', flexShrink: 0, minWidth: '72px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', flexShrink: 0, minWidth: '80px' }}>
             {finished ? (
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: '32px', letterSpacing: '0.04em', lineHeight: 1 }}>
-                {match.home_score}<span style={{ color: 'rgba(240,244,255,0.25)', margin: '0 4px', fontSize: '22px' }}>–</span>{match.away_score}
-              </div>
+              <>
+                {match.penalty_home != null && match.penalty_away != null ? (
+                  // Pênaltis: Brasil 0 (5) × (4) 0 Argentina
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px' }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: '28px', letterSpacing: '0.02em', lineHeight: 1, display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      {match.home_score}
+                      <span style={{ fontSize: '16px', color: 'rgba(240,244,255,0.55)', margin: '0 1px' }}>({match.penalty_home})</span>
+                      <span style={{ color: 'rgba(240,244,255,0.25)', margin: '0 2px', fontSize: '20px' }}>–</span>
+                      <span style={{ fontSize: '16px', color: 'rgba(240,244,255,0.55)', margin: '0 1px' }}>({match.penalty_away})</span>
+                      {match.away_score}
+                    </div>
+                    <div style={{ fontSize: '9px', color: 'rgba(240,244,255,0.35)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Pênaltis</div>
+                  </div>
+                ) : (
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '32px', letterSpacing: '0.04em', lineHeight: 1 }}>
+                    {match.home_score}<span style={{ color: 'rgba(240,244,255,0.25)', margin: '0 4px', fontSize: '22px' }}>–</span>{match.away_score}
+                  </div>
+                )}
+              </>
             ) : live ? (
               <div style={{ fontFamily: 'var(--font-display)', fontSize: '32px', letterSpacing: '0.04em', lineHeight: 1, color: '#ef4444' }}>
                 {match.home_score ?? 0}<span style={{ color: 'rgba(239,68,68,0.4)', margin: '0 4px', fontSize: '22px' }}>–</span>{match.away_score ?? 0}
@@ -329,7 +345,7 @@ function MatchCard({ match }) {
               </div>
             )}
             <div style={{ fontSize: '10px', color: 'rgba(240,244,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-              {finished ? 'Encerrado' : live ? 'Ao vivo' : format(parseISO(match.match_date), 'dd/MM')}
+              {finished ? (match.penalty_home != null ? 'Encerrado' : 'Encerrado') : live ? 'Ao vivo' : format(parseISO(match.match_date), 'dd/MM')}
             </div>
           </div>
 
