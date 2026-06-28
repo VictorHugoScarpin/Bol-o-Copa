@@ -269,12 +269,14 @@ function GuessCard({ match, myGuess, onSave }) {
     setTimeout(() => setSaved(false), 2000)
   }
 
+  // Azul = qualquer acerto com qualifier | Verde = exato sem qual | Amarelo = parcial sem qual | Vermelho = errou tudo
+  const hasBlue = finished && knockout && qualifierCorrect
   const borderColor = finished
-    ? correct ? 'rgba(34,197,94,0.4)' : partialCorrect ? 'rgba(232,184,75,0.4)' : wrong ? 'rgba(239,68,68,0.35)' : 'var(--border)'
+    ? hasBlue ? 'rgba(59,130,246,0.4)' : correct ? 'rgba(34,197,94,0.4)' : partialCorrect ? 'rgba(232,184,75,0.4)' : wrong ? 'rgba(239,68,68,0.35)' : 'var(--border)'
     : live ? 'rgba(239,68,68,0.3)' : 'var(--border)'
 
   const bgColor = finished
-    ? correct ? 'rgba(34,197,94,0.06)' : partialCorrect ? 'rgba(232,184,75,0.06)' : wrong ? 'rgba(239,68,68,0.06)' : 'var(--surface)'
+    ? hasBlue ? 'rgba(59,130,246,0.06)' : correct ? 'rgba(34,197,94,0.06)' : partialCorrect ? 'rgba(232,184,75,0.06)' : wrong ? 'rgba(239,68,68,0.06)' : 'var(--surface)'
     : live ? 'rgba(239,68,68,0.04)' : 'var(--surface)'
 
   return (
@@ -328,13 +330,17 @@ function GuessCard({ match, myGuess, onSave }) {
             {finished
               ? totalPts === 5
                 ? <span className="badge" style={{ background: 'rgba(59,130,246,0.2)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.35)' }}>⚡ +5pts</span>
-                : totalPts === 3 && knockout
+                : qualifierCorrect && correct
+                  ? <span className="badge" style={{ background: 'rgba(59,130,246,0.2)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.35)' }}>⚡ +5pts</span>
+                : qualifierCorrect && partialCorrect
                   ? <span className="badge" style={{ background: 'rgba(59,130,246,0.2)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.35)' }}>+3pts</span>
-                  : correct
-                    ? <span className="badge badge-green">✓ +3pts</span>
-                    : partialCorrect
-                      ? <span className="badge badge-gold">✓ +1pt</span>
-                      : <span className="badge badge-red">✗ Erro</span>
+                : qualifierCorrect
+                  ? <span className="badge" style={{ background: 'rgba(59,130,246,0.2)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.35)' }}>+2pts</span>
+                : correct
+                  ? <span className="badge badge-green">+3pts</span>
+                : partialCorrect
+                  ? <span className="badge badge-gold">+1pt</span>
+                  : <span className="badge badge-red">✗ Erro</span>
               : live ? <span className="badge badge-muted" style={{ fontSize: '9px' }}>🔒</span>
               : myGuess?.home_score !== undefined ? <span className="badge badge-gold">✓ {myGuess.home_score}×{myGuess.away_score}</span>
               : <span className="badge badge-muted" style={{ fontSize: '9px' }}>sem palpite</span>
