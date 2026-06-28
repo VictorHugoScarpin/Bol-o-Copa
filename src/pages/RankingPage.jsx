@@ -485,7 +485,6 @@ function TournamentRow({ profile, position, isMe, breakdown, phasesUnlocked }) {
 }
 
 function YuutoTab({ ranking, loading, user, tournamentIds }) {
-  // Ordena pelo tournament_points, filtra só os 16 do torneio (se já fixado)
   const tourRanking = useMemo(() =>
     [...ranking]
       .filter(p => !tournamentIds || tournamentIds.has(p.id))
@@ -609,7 +608,6 @@ export default function RankingPage() {
       const counts = {}
       ;(guesses || []).forEach(g => { counts[g.user_id] = (counts[g.user_id] || 0) + 1 })
 
-      // IDs dos 16 participantes do torneio
       const ids = new Set()
       ;(matchups || []).forEach(m => {
         if (m.player1_id) ids.add(m.player1_id)
