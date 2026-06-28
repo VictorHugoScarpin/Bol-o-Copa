@@ -941,7 +941,10 @@ function AdversarioTab({ myProfile, bracket, matches, currentPhaseIdx }) {
                   {finished ? (
                     <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', color: 'var(--text)', letterSpacing: '0.06em' }}>{m.home_score} × {m.away_score}</span>
                   ) : (
-                    <span style={{ fontSize: '11px', color: 'var(--gold)', fontWeight: 600 }}>{format(new Date(m.match_date), 'HH:mm')}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px' }}>
+                      <span style={{ fontSize: '10px', color: 'var(--text-3)', fontWeight: 600 }}>{format(new Date(m.match_date), "dd/MM", { locale: ptBR })}</span>
+                      <span style={{ fontSize: '11px', color: 'var(--gold)', fontWeight: 600 }}>{format(new Date(m.match_date), 'HH:mm')}</span>
+                    </div>
                   )}
                 </div>
 
