@@ -85,7 +85,13 @@ export default function QuizProfileCard({ userId }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>Quiz da Copa</div>
           <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>
-            {myAttempt ? `Você fez ${myAttempt.score}/15 acertos` : st.status === 'active' ? 'Participe e concorra a 3 meses de Spotify' : 'Quiz encerrado'}
+          {myAttempt
+  ? myPosition
+    ? `Você fez ${myAttempt.score}/15 acertos — ${myPosition}º lugar`
+    : `Você fez ${myAttempt.score}/15 acertos`
+  : st.status === 'active'
+    ? 'Participe e concorra a 3 meses de Spotify'
+    : 'Quiz encerrado'}
           </div>
         </div>
         {st.status === 'active' && !myAttempt && (
