@@ -985,7 +985,7 @@ function BracketSlot({ p, seed, dim = false }) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '8px', background: dim ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)', border: `1px solid ${dim ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.1)'}`, opacity: dim ? 0.5 : 1 }}>
-      <div style={{ width: 20, flexShrink: 0, textAlign: 'center', fontSize: '9px', color: 'var(--text-3)', fontFamily: 'var(--font-display)' }}>{seed}º</div>
+      <div style={{ width: 20, flexShrink: 0, textAlign: 'center', fontSize: '9px', color: 'var(--text-3)', fontFamily: 'var(--font-display)' }}>{seed ? `${seed}º` : ''}</div>
       <Avatar profile={p} size={24} />
       <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {p.display_name || p.nick}
@@ -1006,29 +1006,50 @@ function MatchupCard({ m1, m2, seed1, seed2, myId }) {
 }
 
 function ChaveamentoTab({ bracket, loading, currentPhaseIdx, myId }) {
+  // Fase que está sendo VISUALIZADA (pode ser diferente da que está ao vivo)
+  const [viewPhaseIdx, setViewPhaseIdx] = useState(currentPhaseIdx)
+
   if (loading) return Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton" style={{ height: 80, marginBottom: 8, borderRadius: 10 }} />)
 
-  const phase = TOURNAMENT_PHASES[currentPhaseIdx]
+  const phase = TOURNAMENT_PHASES[viewPhaseIdx]
+
+  // Pega os confrontos da fase visualizada (oitavas já vem em chaveA/chaveB; as demais em listas planas)
+  let slotsA = [], slotsB = []
+  if (viewPhaseIdx === 0) {
+    slotsA = bracket?.chaveA || []
+    slotsB = bracket?.chaveB || []
+  } else {
+    const flat = bracket?.[phase.key] || []
+    const half = Math.ceil(flat.length / 2)
+    slotsA = flat.slice(0, half)
+    slotsB = flat.slice(half)
+  }
+  const hasMatchups = slotsA.length > 0 || slotsB.length > 0
 
   return (
     <div>
-      {/* Fase atual */}
+      {/* Navegação de fases */}
       <div style={{ display: 'flex', gap: '6px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '4px' }}>
         {TOURNAMENT_PHASES.map((ph, i) => (
-          <div key={ph.key} style={{
-            flexShrink: 0, padding: '6px 14px', borderRadius: '20px',
-            fontSize: '12px', fontWeight: 600,
-            background: i === currentPhaseIdx ? 'rgba(168,85,247,0.2)' : 'var(--surface)',
-            border: `1px solid ${i === currentPhaseIdx ? 'rgba(168,85,247,0.5)' : 'var(--border)'}`,
-            color: i === currentPhaseIdx ? '#c084fc' : i < currentPhaseIdx ? 'var(--text-2)' : 'var(--text-3)',
-          }}>
+          <div
+            key={ph.key}
+            onClick={() => setViewPhaseIdx(i)}
+            role="button"
+            tabIndex={0}
+            style={{
+              flexShrink: 0, padding: '6px 14px', borderRadius: '20px',
+              fontSize: '12px', fontWeight: 600, cursor: 'pointer', userSelect: 'none',
+              background: i === viewPhaseIdx ? 'rgba(168,85,247,0.2)' : 'var(--surface)',
+              border: `1px solid ${i === viewPhaseIdx ? 'rgba(168,85,247,0.5)' : i === currentPhaseIdx ? 'rgba(168,85,247,0.3)' : 'var(--border)'}`,
+              color: i === viewPhaseIdx ? '#c084fc' : i < currentPhaseIdx ? 'var(--text-2)' : 'var(--text-3)',
+            }}>
             {i < currentPhaseIdx ? '✓ ' : ''}{ph.label}
             {i === currentPhaseIdx && <span style={{ marginLeft: '6px', fontSize: '9px', background: 'rgba(168,85,247,0.3)', padding: '1px 5px', borderRadius: '10px' }}>AO VIVO</span>}
           </div>
         ))}
       </div>
 
-      {/* Datas da fase atual */}
+      {/* Datas da fase visualizada */}
       <div style={{ fontSize: '11px', color: 'var(--text-3)', marginBottom: '16px', padding: '8px 12px', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
         📅 <strong style={{ color: 'var(--text-2)' }}>{phase.label}:</strong> {new Date(phase.start + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} – {new Date(phase.end + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
         <span style={{ marginLeft: '10px' }}>· Avançar vale <strong style={{ color: '#c084fc' }}>+{phase.bonus}pts</strong></span>
@@ -1039,25 +1060,34 @@ function ChaveamentoTab({ bracket, loading, currentPhaseIdx, myId }) {
           <div style={{ fontSize: '28px', marginBottom: '8px' }}>⏳</div>
           <div>Chaveamento disponível quando os 16 participantes estiverem confirmados.</div>
         </div>
+      ) : !hasMatchups ? (
+        <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-3)' }}>
+          <div style={{ fontSize: '28px', marginBottom: '8px' }}>⏳</div>
+          <div>Confrontos de <strong style={{ color: 'var(--text-2)' }}>{phase.label}</strong> ainda não foram definidos.</div>
+        </div>
       ) : (
         <>
           {/* Chave A */}
-          <div style={{ marginBottom: '20px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(168,85,247,0.7)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px' }}>⚔️ Chave A</div>
-            {bracket.chaveA.map((m, i) => {
-              const seeds = [i * 2 + 1, 16 - i * 2]
-              return <MatchupCard key={i} m1={m.p1} m2={m.p2} seed1={seeds[0]} seed2={seeds[1]} myId={myId} />
-            })}
-          </div>
+          {slotsA.length > 0 && (
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(168,85,247,0.7)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px' }}>⚔️ Chave A</div>
+              {slotsA.map((m, i) => {
+                const seeds = viewPhaseIdx === 0 ? [i * 2 + 1, 16 - i * 2] : [null, null]
+                return <MatchupCard key={i} m1={m.p1} m2={m.p2} seed1={seeds[0]} seed2={seeds[1]} myId={myId} />
+              })}
+            </div>
+          )}
 
           {/* Chave B */}
-          <div>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(168,85,247,0.7)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px' }}>⚔️ Chave B</div>
-            {bracket.chaveB.map((m, i) => {
-              const seeds = [i * 2 + 2, 15 - i * 2]
-              return <MatchupCard key={i} m1={m.p1} m2={m.p2} seed1={seeds[0]} seed2={seeds[1]} myId={myId} />
-            })}
-          </div>
+          {slotsB.length > 0 && (
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(168,85,247,0.7)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px' }}>⚔️ Chave B</div>
+              {slotsB.map((m, i) => {
+                const seeds = viewPhaseIdx === 0 ? [i * 2 + 2, 15 - i * 2] : [null, null]
+                return <MatchupCard key={i} m1={m.p1} m2={m.p2} seed1={seeds[0]} seed2={seeds[1]} myId={myId} />
+              })}
+            </div>
+          )}
 
           {/* Legenda */}
           <div style={{ marginTop: '16px', padding: '10px 14px', borderRadius: '8px', background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.15)', fontSize: '11px', color: 'var(--text-3)', lineHeight: 1.7 }}>
