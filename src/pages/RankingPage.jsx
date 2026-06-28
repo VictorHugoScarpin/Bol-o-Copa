@@ -484,13 +484,13 @@ function TournamentRow({ profile, position, isMe, breakdown, phasesUnlocked }) {
   )
 }
 
-function YuutoTab({ ranking, loading, user }) {
-  // Ordena pelo tournament_points
+function YuutoTab({ ranking, loading, user, tournamentIds }) {
+  // Ordena pelo tournament_points, filtra só os 16 do torneio (se já fixado)
   const tourRanking = useMemo(() =>
     [...ranking]
-      .filter(p => (p.tournament_points || 0) > 0 || true) // mostra todos
+      .filter(p => !tournamentIds || tournamentIds.has(p.id))
       .sort((a, b) => (b.tournament_points || 0) - (a.tournament_points || 0) || (b.points - a.points))
-  , [ranking])
+  , [ranking, tournamentIds])
 
   // Quantas fases já começaram
   const today = new Date()
@@ -573,12 +573,13 @@ export default function RankingPage() {
   const { user } = useAuth()
   const [ranking, setRanking] = useState([])
   const [guessCounts, setGuessCounts] = useState({})
+  const [tournamentIds, setTournamentIds] = useState(null)
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState('supercopa')
 
   useEffect(() => {
     async function fetchData() {
-      const [{ data: profiles }, { data: guesses }] = await Promise.all([
+      const [{ data: profiles }, { data: guesses }, { data: matchups }] = await Promise.all([
         supabase
           .from('profiles')
           .select('id, display_name, nick, avatar_url, points, exact_hits, partial_hits, qualifier_hits, tournament_points, created_at')
@@ -587,6 +588,7 @@ export default function RankingPage() {
           .order('partial_hits', { ascending: false })
           .order('created_at', { ascending: true }),
         supabase.from('guesses').select('user_id'),
+        supabase.from('tournament_matchups').select('player1_id, player2_id').eq('phase', 'oitavas'),
       ])
 
       // Supercopa = liga + torneio
@@ -606,6 +608,14 @@ export default function RankingPage() {
 
       const counts = {}
       ;(guesses || []).forEach(g => { counts[g.user_id] = (counts[g.user_id] || 0) + 1 })
+
+      // IDs dos 16 participantes do torneio
+      const ids = new Set()
+      ;(matchups || []).forEach(m => {
+        if (m.player1_id) ids.add(m.player1_id)
+        if (m.player2_id) ids.add(m.player2_id)
+      })
+      setTournamentIds(ids.size > 0 ? ids : null)
 
       setRanking(enriched)
       setGuessCounts(counts)
@@ -655,7 +665,7 @@ export default function RankingPage() {
 
       {view === 'supercopa' && <SupercopaTab ranking={ranking} loading={loading} user={user} />}
       {view === 'nekomao'   && <NekomaoTab   ranking={ranking} loading={loading} user={user} guessCounts={guessCounts} />}
-      {view === 'yuuto'     && <YuutoTab     ranking={ranking} loading={loading} user={user} />}
+      {view === 'yuuto'     && <YuutoTab     ranking={ranking} loading={loading} user={user} tournamentIds={tournamentIds} />}
     </div>
   )
 }
