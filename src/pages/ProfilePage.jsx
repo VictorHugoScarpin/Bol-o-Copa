@@ -3,6 +3,98 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import QuizProfileCard from '../components/QuizProfileCard'
 
+function RegrasSection() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '12px' }}>
+      <div className="section-title" style={{ marginBottom: '4px' }}>Regras</div>
+
+      {/* Pontuação */}
+      <div className="glass-card" style={{ padding: '16px 20px' }}>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: '18px', color: 'var(--gold)', marginBottom: '14px', letterSpacing: '0.06em' }}>PONTUAÇÃO</div>
+        {[
+          { icon: '🎯', label: 'Placar Exato', desc: 'Acertou o placar certinho (ex: 2×1 = 2×1)', pts: '+3', color: 'var(--green)' },
+          { icon: '✅', label: 'Vencedor Certo', desc: 'Acertou quem ganhou mas errou o placar', pts: '+1', color: 'var(--gold)' },
+          { icon: '🤝', label: 'Empate Certo', desc: 'Previu empate e deu empate', pts: '+1', color: 'var(--gold)' },
+          { icon: '❌', label: 'Errou', desc: 'Não acertou nem o resultado', pts: '0', color: 'var(--red)' },
+        ].map(item => (
+          <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+            <span style={{ fontSize: '18px', flexShrink: 0 }}>{item.icon}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '13px', fontWeight: 600 }}>{item.label}</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-3)', marginTop: '2px' }}>{item.desc}</div>
+            </div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '22px', color: item.color, flexShrink: 0 }}>{item.pts}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Palpite Mestre */}
+      <div className="glass-card" style={{ padding: '16px 20px' }}>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: '18px', color: 'var(--gold)', marginBottom: '14px', letterSpacing: '0.06em' }}>PALPITE MESTRE</div>
+        {[
+          { icon: '🏆', label: 'Dois finalistas certos', pts: '+10' },
+          { icon: '🥈', label: 'Um finalista certo', pts: '+5' },
+          { icon: '❌', label: 'Errou os dois', pts: '0' },
+        ].map(item => (
+          <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+            <span style={{ fontSize: '18px' }}>{item.icon}</span>
+            <div style={{ flex: 1, fontSize: '13px' }}>{item.label}</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '22px', color: 'var(--gold)' }}>{item.pts}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desempate */}
+      <div className="glass-card" style={{ padding: '16px 20px' }}>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: '18px', color: 'var(--gold)', marginBottom: '14px', letterSpacing: '0.06em' }}>DESEMPATE</div>
+        {[
+          { icon: '⭐', label: 'Pontos', desc: 'Maior pontuação total' },
+          { icon: '🎯', label: 'Placares exatos', desc: 'Quem acertou mais placares certinhos' },
+          { icon: '✅', label: 'Parciais', desc: 'Quem acertou mais vencedores/empates' },
+          { icon: '🕐', label: 'Entrada no bolão', desc: 'Quem se cadastrou primeiro leva a melhor' },
+        ].map((item, i, arr) => (
+          <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '9px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
+            <span style={{ fontSize: '18px', flexShrink: 0 }}>{item.icon}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '13px', fontWeight: 600 }}>{item.label}</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-3)', marginTop: '2px' }}>{item.desc}</div>
+            </div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: 'var(--text-3)', flexShrink: 0 }}>{i + 1}º</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Mata-mata — padronizado igual aos outros blocos */}
+      <div className="glass-card" style={{ padding: '16px 20px' }}>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: '18px', color: 'var(--gold)', marginBottom: '6px', letterSpacing: '0.06em' }}>🏆 MATA-MATA</div>
+        <div style={{ fontSize: '11px', color: 'var(--text-3)', marginBottom: '14px', lineHeight: 1.6 }}>
+          A partir de <strong style={{ color: 'var(--text-2)' }}>28 de junho</strong>, os jogos entram na fase eliminatória. Além do palpite de placar, você também escolhe <strong style={{ color: 'var(--text-2)' }}>quem se classifica</strong> — e isso vale pontos extras!
+        </div>
+        {[
+          { icon: '⚡', label: 'Placar exato + classificado certo', pts: '+5', color: 'var(--green)', desc: 'Acertou o placar certinho e ainda o time que passa' },
+          { icon: '🎯', label: 'Placar exato (sem acertar classificado)', pts: '+3', color: 'var(--green)', desc: 'Acertou 2×1 = 2×1, mas errou quem classificou' },
+          { icon: '✅', label: 'Resultado certo + classificado certo', pts: '+3', color: 'var(--gold)', desc: 'Acertou o vencedor/empate e o time que avança' },
+          { icon: '✅', label: 'Resultado certo (sem acertar classificado)', pts: '+1', color: 'var(--gold)', desc: 'Acertou quem ganhou mas errou quem classificou' },
+          { icon: '🏆', label: 'Só acertou quem classifica', pts: '+2', color: 'var(--gold)', desc: 'Errou o placar/resultado mas acertou quem avançou' },
+          { icon: '❌', label: 'Errou tudo', pts: '0', color: 'var(--red)', desc: 'Não acertou placar, resultado nem classificado' },
+        ].map((item, i, arr) => (
+          <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
+            <span style={{ fontSize: '18px', flexShrink: 0 }}>{item.icon}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)' }}>{item.label}</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-3)', marginTop: '2px' }}>{item.desc}</div>
+            </div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '22px', color: item.color, flexShrink: 0 }}>{item.pts}</div>
+          </div>
+        ))}
+        <div style={{ marginTop: '12px', padding: '10px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', fontSize: '11px', color: 'var(--text-3)', lineHeight: 1.7 }}>
+          💡 <strong style={{ color: 'var(--text-2)' }}>Como funciona:</strong> No mata-mata, em caso de empate no tempo normal o jogo pode ir para pênaltis. O "classificado" é o time que efetivamente avança — seja pelo tempo normal ou pelos pênaltis. Seu palpite de placar vale para o tempo regulamentar (90min + prorrogação).
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ProfilePage() {
   const { user, profile, signOut, fetchProfile } = useAuth()
   const [displayName, setDisplayName] = useState(profile?.display_name || '')
@@ -100,9 +192,9 @@ export default function ProfilePage() {
         </button>
       </div>
 
+      <RegrasSection />
+
       <button
-        className="btn"
-        onClick={signOut}
         style={{ color: 'var(--red)', borderColor: 'rgba(240,62,62,0.25)', background: 'var(--red-dim)' }}
       >
         Sair da conta
