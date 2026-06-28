@@ -265,8 +265,8 @@ function HeaderRow() {
       <div style={hStyle}>PE</div>
       <div style={hStyle}>PR</div>
       <div style={hStyle}>CC</div>
-      <div style={hStyle}>J</div>
       <div style={hStyle}>PM</div>
+      <div style={hStyle}>J</div>
     </div>
   )
 }
@@ -301,8 +301,8 @@ function PlayerRow({ profile, position, isMe, totalGuesses, masterPoints }) {
       <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-2)', fontWeight: 500 }}>{profile.exact_hits ?? 0}</div>
       <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-2)', fontWeight: 500 }}>{profile.partial_hits ?? 0}</div>
       <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-2)', fontWeight: 500 }}>{profile.qualifier_hits ?? 0}</div>
-      <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-3)' }}>{totalGuesses ?? 0}</div>
       <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-2)', fontWeight: 500 }}>{masterPoints > 0 ? masterPoints : 0}</div>
+      <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-3)' }}>{totalGuesses ?? 0}</div>
     </div>
   )
 }
@@ -324,8 +324,8 @@ function NekomaoTab({ ranking, loading, user, guessCounts, masterGuesses }) {
           { sig: 'PE', desc: 'Placar exato' },
           { sig: 'PR', desc: 'Resultado certo' },
           { sig: 'CC', desc: 'Classificação certa' },
-          { sig: 'J',  desc: 'Jogos palpitados' },
           { sig: 'PM', desc: 'Palpite Mestre' },
+          { sig: 'J',  desc: 'Jogos palpitados' },
         ].map(({ sig, desc }) => (
           <div key={sig} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--gold)', fontFamily: 'var(--font-display)', letterSpacing: '0.06em' }}>{sig}</span>
