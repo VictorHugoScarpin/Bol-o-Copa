@@ -33,27 +33,35 @@ const KNOCKOUT_START_R = new Date('2026-06-28T00:00:00')
 
 function ScoredGuesses({ userId, tournamentPoints }) {
   const [items, setItems] = useState(null)
+  const [masterPoints, setMasterPoints] = useState(0)
 
   useEffect(() => {
     let active = true
-    supabase
-      .from('guesses')
-      .select('home_score, away_score, qualifier_guess, matches(home_team, away_team, home_score, away_score, status, match_date, qualifier_result)')
-      .eq('user_id', userId)
-      .then(({ data }) => {
-        if (!active) return
-        const scored = (data || [])
-          .filter(g => {
-            const m = g.matches
-            if (!m || m.status !== 'finished') return false
-            const result = getGuessResult(g, m.home_score, m.away_score)
-            const isKo = new Date(m.match_date) >= KNOCKOUT_START_R
-            const qualifierHit = isKo && g.qualifier_guess && m.qualifier_result && g.qualifier_guess === m.qualifier_result
-            return result === 'exact' || result === 'partial' || qualifierHit
-          })
-          .sort((a, b) => new Date(a.matches.match_date) - new Date(b.matches.match_date))
-        setItems(scored)
-      })
+    Promise.all([
+      supabase
+        .from('guesses')
+        .select('home_score, away_score, qualifier_guess, matches(home_team, away_team, home_score, away_score, status, match_date, qualifier_result)')
+        .eq('user_id', userId),
+      supabase
+        .from('master_guess')
+        .select('points_earned, team1, team2')
+        .eq('user_id', userId)
+        .maybeSingle(),
+    ]).then(([{ data }, { data: mg }]) => {
+      if (!active) return
+      const scored = (data || [])
+        .filter(g => {
+          const m = g.matches
+          if (!m || m.status !== 'finished') return false
+          const result = getGuessResult(g, m.home_score, m.away_score)
+          const isKo = new Date(m.match_date) >= KNOCKOUT_START_R
+          const qualifierHit = isKo && g.qualifier_guess && m.qualifier_result && g.qualifier_guess === m.qualifier_result
+          return result === 'exact' || result === 'partial' || qualifierHit
+        })
+        .sort((a, b) => new Date(a.matches.match_date) - new Date(b.matches.match_date))
+      setItems(scored)
+      setMasterPoints(mg?.points_earned || 0)
+    })
     return () => { active = false }
   }, [userId])
 
@@ -80,7 +88,20 @@ function ScoredGuesses({ userId, tournamentPoints }) {
         </div>
       )}
 
-      {items.length === 0 && tournamentPoints === 0 && (
+      {/* Pontos do Palpite Mestre, se houver */}
+      {masterPoints > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '8px', background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.25)' }}>
+          <span style={{ fontSize: '14px' }}>🏆</span>
+          <span style={{ fontSize: '11px', color: '#fb923c', flex: 1 }}>
+            Palpite Mestre {masterPoints === 10 ? '(2 finalistas ✓✓)' : '(1 finalista ✓)'}
+          </span>
+          <span style={{ fontFamily: 'var(--font-display)', fontSize: '15px', color: '#fb923c', fontWeight: 700 }}>
+            +{masterPoints}
+          </span>
+        </div>
+      )}
+
+      {items.length === 0 && tournamentPoints === 0 && masterPoints === 0 && (
         <div style={{ fontSize: '12px', color: 'var(--text-3)', textAlign: 'center', padding: '10px 0' }}>
           Nenhuma pontuação ainda.
         </div>
@@ -232,7 +253,7 @@ function SupercopaTab({ ranking, loading, user }) {
 
 // ── Aba CLASSIFICAÇÃO NEKOMÃO (só liga) ────────────────────────────────────────
 const COL = '34px'
-const COLS = `28px 1fr ${COL} ${COL} ${COL} ${COL} ${COL}`
+const COLS = `28px 1fr ${COL} ${COL} ${COL} ${COL} ${COL} ${COL}`
 const hStyle = { fontSize: '10px', fontWeight: 700, color: 'var(--text-3)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.08em' }
 
 function HeaderRow() {
@@ -245,11 +266,12 @@ function HeaderRow() {
       <div style={hStyle}>PR</div>
       <div style={hStyle}>CC</div>
       <div style={hStyle}>J</div>
+      <div style={hStyle}>PM</div>
     </div>
   )
 }
 
-function PlayerRow({ profile, position, isMe, totalGuesses }) {
+function PlayerRow({ profile, position, isMe, totalGuesses, masterPoints }) {
   const posColors = { 1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32' }
   const posColor = posColors[position] || 'var(--text-3)'
   const isTop3 = position <= 3
@@ -280,11 +302,12 @@ function PlayerRow({ profile, position, isMe, totalGuesses }) {
       <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-2)', fontWeight: 500 }}>{profile.partial_hits ?? 0}</div>
       <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-2)', fontWeight: 500 }}>{profile.qualifier_hits ?? 0}</div>
       <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-3)' }}>{totalGuesses ?? 0}</div>
+      <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-2)', fontWeight: 500 }}>{masterPoints > 0 ? masterPoints : 0}</div>
     </div>
   )
 }
 
-function NekomaoTab({ ranking, loading, user, guessCounts }) {
+function NekomaoTab({ ranking, loading, user, guessCounts, masterGuesses }) {
   // Ordena só por pontos da liga (profiles.points)
   const ligaRanking = useMemo(() =>
     [...ranking].sort((a, b) =>
@@ -302,6 +325,7 @@ function NekomaoTab({ ranking, loading, user, guessCounts }) {
           { sig: 'PR', desc: 'Resultado certo' },
           { sig: 'CC', desc: 'Classificação certa' },
           { sig: 'J',  desc: 'Jogos palpitados' },
+          { sig: 'PM', desc: 'Palpite Mestre' },
         ].map(({ sig, desc }) => (
           <div key={sig} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--gold)', fontFamily: 'var(--font-display)', letterSpacing: '0.06em' }}>{sig}</span>
@@ -318,7 +342,7 @@ function NekomaoTab({ ranking, loading, user, guessCounts }) {
         <div className="glass-card" style={{ overflow: 'hidden', padding: 0 }}>
           <HeaderRow />
           {ligaRanking.map((p, i) => (
-            <PlayerRow key={p.id} profile={p} position={i + 1} isMe={p.id === user?.id} totalGuesses={guessCounts[p.id] || 0} />
+            <PlayerRow key={p.id} profile={p} position={i + 1} isMe={p.id === user?.id} totalGuesses={guessCounts[p.id] || 0} masterPoints={masterGuesses[p.id] || 0} />
           ))}
           {ligaRanking.length === 0 && (
             <div style={{ textAlign: 'center', color: 'var(--text-3)', padding: '40px 0', fontSize: '13px' }}>
@@ -572,13 +596,14 @@ export default function RankingPage() {
   const { user } = useAuth()
   const [ranking, setRanking] = useState([])
   const [guessCounts, setGuessCounts] = useState({})
+  const [masterGuesses, setMasterGuesses] = useState({})
   const [tournamentIds, setTournamentIds] = useState(null)
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState('supercopa')
 
   useEffect(() => {
     async function fetchData() {
-      const [{ data: profiles }, { data: guesses }, { data: matchups }] = await Promise.all([
+      const [{ data: profiles }, { data: guesses }, { data: matchups }, { data: masterGuessData }] = await Promise.all([
         supabase
           .from('profiles')
           .select('id, display_name, nick, avatar_url, points, exact_hits, partial_hits, qualifier_hits, tournament_points, created_at')
@@ -588,6 +613,7 @@ export default function RankingPage() {
           .order('created_at', { ascending: true }),
         supabase.from('guesses').select('user_id'),
         supabase.from('tournament_matchups').select('player1_id, player2_id').eq('phase', 'oitavas'),
+        supabase.from('master_guess').select('user_id, points_earned'),
       ])
 
       // Supercopa = liga + torneio
@@ -608,6 +634,9 @@ export default function RankingPage() {
       const counts = {}
       ;(guesses || []).forEach(g => { counts[g.user_id] = (counts[g.user_id] || 0) + 1 })
 
+      const mgMap = {}
+      ;(masterGuessData || []).forEach(mg => { mgMap[mg.user_id] = mg.points_earned || 0 })
+
       const ids = new Set()
       ;(matchups || []).forEach(m => {
         if (m.player1_id) ids.add(m.player1_id)
@@ -617,6 +646,7 @@ export default function RankingPage() {
 
       setRanking(enriched)
       setGuessCounts(counts)
+      setMasterGuesses(mgMap)
       setLoading(false)
     }
 
@@ -662,7 +692,7 @@ export default function RankingPage() {
       </div>
 
       {view === 'supercopa' && <SupercopaTab ranking={ranking} loading={loading} user={user} />}
-      {view === 'nekomao'   && <NekomaoTab   ranking={ranking} loading={loading} user={user} guessCounts={guessCounts} />}
+      {view === 'nekomao'   && <NekomaoTab   ranking={ranking} loading={loading} user={user} guessCounts={guessCounts} masterGuesses={masterGuesses} />}
       {view === 'yuuto'     && <YuutoTab     ranking={ranking} loading={loading} user={user} tournamentIds={tournamentIds} />}
     </div>
   )
