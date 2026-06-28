@@ -72,7 +72,7 @@ function ScoredGuesses({ userId, tournamentPoints }) {
       {/* Pontos do torneio, se houver */}
       {tournamentPoints > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '8px', background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.25)' }}>
-          <span style={{ fontSize: '14px' }}>🏆</span>
+          <span style={{ fontSize: '14px' }}>🎌</span>
           <span style={{ fontSize: '11px', color: '#c084fc', flex: 1 }}>Pontos da Copa Yuuto Kidou</span>
           <span style={{ fontFamily: 'var(--font-display)', fontSize: '15px', color: '#c084fc', fontWeight: 700 }}>
             +{tournamentPoints}
@@ -95,8 +95,9 @@ function ScoredGuesses({ userId, tournamentPoints }) {
         const blueCombo = qualifierHit
         const basePoints = isExact ? 3 : result === 'partial' ? 1 : 0
         const totalPoints = basePoints + (qualifierHit ? 2 : 0)
-        const color = blueCombo ? '#60a5fa' : isExact ? 'var(--green)' : 'var(--gold)'
-        const bg = blueCombo ? 'rgba(59,130,246,0.1)' : isExact ? 'var(--green-dim)' : 'rgba(232,184,75,0.08)'
+        // Azul = qualificado certo (qualquer combo), Verde = placar exato sem classificado, Amarelo = resultado certo sem classificado
+        const color = qualifierHit ? '#60a5fa' : isExact ? 'var(--green)' : result === 'partial' ? 'var(--gold)' : 'var(--red)'
+        const bg = qualifierHit ? 'rgba(59,130,246,0.1)' : isExact ? 'var(--green-dim)' : result === 'partial' ? 'rgba(232,184,75,0.08)' : 'rgba(240,62,62,0.08)'
         return (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 10px', borderRadius: '8px', background: bg }}>
             <FlagCircle name={m.home_team} size={22} />
@@ -131,18 +132,6 @@ function SupercopaTab({ ranking, loading, user }) {
 
   return (
     <>
-      {/* Legenda */}
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '14px', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--gold)', fontFamily: 'var(--font-display)' }}>Liga</span>
-          <span style={{ fontSize: '11px', color: 'var(--text-3)' }}>pontos Nekomão</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <span style={{ fontSize: '11px', fontWeight: 700, color: '#c084fc', fontFamily: 'var(--font-display)' }}>Torneio</span>
-          <span style={{ fontSize: '11px', color: 'var(--text-3)' }}>pontos Yuuto Kidou</span>
-        </div>
-      </div>
-
       {/* Pódio */}
       {ranking.length >= 3 && (
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '8px', marginBottom: '32px', marginTop: '8px' }}>
@@ -166,8 +155,10 @@ function SupercopaTab({ ranking, loading, user }) {
                     {p.supercopaPoints}<span style={{ fontSize: '0.6em', marginLeft: 2 }}>pt</span>
                   </div>
                   {p.tournament_points > 0 && (
-                    <div style={{ fontSize: '10px', color: '#c084fc', marginTop: '2px' }}>
-                      +{p.tournament_points} 🏆
+                    <div style={{ fontSize: '10px', marginTop: '2px' }}>
+                      <span style={{ color: 'var(--gold)' }}>{p.points}</span>
+                      <span style={{ color: 'var(--text-3)' }}>+</span>
+                      <span style={{ color: '#c084fc' }}>{p.tournament_points}</span>
                     </div>
                   )}
                 </div>
@@ -202,8 +193,10 @@ function SupercopaTab({ ranking, loading, user }) {
                         {p.supercopaPoints}
                       </div>
                       {p.tournament_points > 0 && (
-                        <div style={{ fontSize: '10px', color: '#c084fc', marginTop: '1px' }}>
-                          {p.points} <span style={{ color: 'var(--text-3)' }}>+</span> <span style={{ color: '#c084fc' }}>{p.tournament_points}🏆</span>
+                        <div style={{ fontSize: '10px', marginTop: '1px' }}>
+                          <span style={{ color: 'var(--gold)' }}>{p.points}</span>
+                          <span style={{ color: 'var(--text-3)' }}>+</span>
+                          <span style={{ color: '#c084fc' }}>{p.tournament_points}</span>
                         </div>
                       )}
                     </div>
@@ -466,7 +459,7 @@ function TournamentRow({ profile, position, isMe, breakdown, phasesUnlocked }) {
                         fontSize: '12px', fontWeight: 700, color: '#c084fc',
                         background: 'rgba(168,85,247,0.15)', padding: '2px 8px', borderRadius: 8
                       }}>
-                        +{phase.bonus}🏆
+                        +{phase.bonus}
                       </span>
                     )}
                     {unlocked && pts === 0 && (
@@ -480,7 +473,7 @@ function TournamentRow({ profile, position, isMe, breakdown, phasesUnlocked }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', marginTop: '4px', borderTop: '1px solid rgba(168,85,247,0.2)', borderRadius: '0 0 8px 8px' }}>
                 <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 600 }}>Total acumulado</span>
                 <span style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: '#c084fc', fontWeight: 700 }}>
-                  {profile.tournament_points || 0}pt
+                  {profile.tournament_points || 0}pt 🎌
                 </span>
               </div>
             </div>
@@ -542,7 +535,7 @@ function YuutoTab({ ranking, loading, user }) {
           <div style={{ display: 'flex', alignItems: 'center', padding: '7px 14px', borderBottom: '1px solid var(--border)', gap: 10 }}>
             <div style={{ width: 28 }} />
             <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', flex: 1, paddingLeft: 38 }}>Jogador</div>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: '#c084fc', textTransform: 'uppercase', letterSpacing: '0.08em' }}>PT 🏆</div>
+            <div style={{ fontSize: '10px', fontWeight: 700, color: '#c084fc', textTransform: 'uppercase', letterSpacing: '0.08em' }}>PT</div>
             <div style={{ width: 30 }} />
           </div>
 
