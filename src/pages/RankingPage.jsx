@@ -39,7 +39,9 @@ function ScoredGuesses({ userId }) {
             const m = g.matches
             if (!m || m.status !== 'finished') return false
             const result = getGuessResult(g, m.home_score, m.away_score)
-            return result === 'exact' || result === 'partial'
+            const isKo = new Date(m.match_date) >= KNOCKOUT_START_R
+            const qualifierHit = isKo && g.qualifier_guess && m.qualifier_result && g.qualifier_guess === m.qualifier_result
+            return result === 'exact' || result === 'partial' || qualifierHit
           })
           .sort((a, b) => new Date(a.matches.match_date) - new Date(b.matches.match_date))
         setItems(scored)
@@ -73,8 +75,8 @@ function ScoredGuesses({ userId }) {
         const isExact = result === 'exact'
         const isKo = new Date(m.match_date) >= KNOCKOUT_START_R
         const qualifierHit = isKo && g.qualifier_guess && m.qualifier_result && g.qualifier_guess === m.qualifier_result
-        const blueCombo = qualifierHit && (isExact || result === 'partial')
-        const basePoints = isExact ? 3 : 1
+        const blueCombo = qualifierHit
+        const basePoints = isExact ? 3 : result === 'partial' ? 1 : 0
         const totalPoints = basePoints + (qualifierHit ? 2 : 0)
 
         const color = blueCombo ? '#60a5fa' : isExact ? 'var(--green)' : 'var(--gold)'
