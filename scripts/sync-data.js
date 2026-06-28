@@ -91,6 +91,79 @@ function mapGroup(group) {
   return group.replace('GROUP_', 'Grupo ')
 }
 
+// ── PONTUAÇÃO DO BOLÃO ──────────────────────────────────────────────────────
+const KNOCKOUT_START = new Date('2026-06-28T00:00:00Z')
+
+function calcPoints(guess, matchHomeScore, matchAwayScore, qualifierResult, matchDate) {
+  if (matchHomeScore == null || matchAwayScore == null) return 0
+  const isKnockout = new Date(matchDate) >= KNOCKOUT_START
+
+  const exactScore = guess.home_score === matchHomeScore && guess.away_score === matchAwayScore
+  const realWinner = matchHomeScore > matchAwayScore ? 'home' : matchAwayScore > matchHomeScore ? 'away' : 'draw'
+  const guessWinner = guess.home_score > guess.away_score ? 'home' : guess.away_score > guess.home_score ? 'away' : 'draw'
+  const correctResult = realWinner === guessWinner
+
+  const qualifierCorrect = isKnockout && qualifierResult && guess.qualifier_guess === qualifierResult
+
+  let pts = 0
+  if (exactScore) pts += 3
+  else if (correctResult) pts += 1
+  if (qualifierCorrect) pts += 2
+
+  return pts
+}
+
+async function recalcMatchPoints(matchId, homeScore, awayScore, qualifierResult, matchDate) {
+  const { data: guesses, error } = await supabase
+    .from('guesses')
+    .select('id, user_id, home_score, away_score, qualifier_guess')
+    .eq('match_id', matchId)
+
+  if (error || !guesses?.length) return
+
+  const affectedUsers = new Set()
+
+  for (const g of guesses) {
+    const pts = calcPoints(g, homeScore, awayScore, qualifierResult, matchDate)
+    await supabase.from('guesses').update({ points_earned: pts }).eq('id', g.id)
+    affectedUsers.add(g.user_id)
+  }
+
+  // Recalcula totais de cada usuário afetado do zero
+  for (const userId of affectedUsers) {
+    const { data: allGuesses } = await supabase
+      .from('guesses')
+      .select('points_earned, home_score, away_score, qualifier_guess, matches(home_score, away_score, status, match_date, qualifier_result)')
+      .eq('user_id', userId)
+
+    let totalPts = 0, totalExact = 0, totalPartial = 0, totalQualifier = 0
+
+    for (const ag of (allGuesses || [])) {
+      const m = ag.matches
+      if (!m || m.status !== 'finished' || m.home_score == null) continue
+      totalPts += ag.points_earned ?? 0
+      if (ag.home_score === m.home_score && ag.away_score === m.away_score) {
+        totalExact++
+      } else {
+        const rw = m.home_score > m.away_score ? 'home' : m.away_score > m.home_score ? 'away' : 'draw'
+        const gw = ag.home_score > ag.away_score ? 'home' : ag.away_score > ag.home_score ? 'away' : 'draw'
+        if (rw === gw) totalPartial++
+      }
+      const isKo = new Date(m.match_date) >= KNOCKOUT_START
+      if (isKo && m.qualifier_result && ag.qualifier_guess === m.qualifier_result) totalQualifier++
+    }
+
+    await supabase.from('profiles').update({
+      points: totalPts,
+      exact_hits: totalExact,
+      partial_hits: totalPartial,
+      qualifier_hits: totalQualifier,
+    }).eq('id', userId)
+  }
+
+  console.log(`  ↳ Pontos recalculados: jogo ${matchId} | ${affectedUsers.size} usuários`)
+}
+
 // ── 1. JOGOS ────────────────────────────────────────────────────────────────
 async function syncMatches() {
   console.log('📅 Sincronizando jogos...')
@@ -102,7 +175,31 @@ async function syncMatches() {
   for (const match of matches) {
     if (!match.homeTeam?.name || !match.awayTeam?.name) { pulados++; continue }
 
-    // Montar objeto base — nunca sobrescrever placar manual com null
+    const status = mapStatus(match.status)
+
+    // Placar: usa extratime se houver, senão fulltime
+    // Pênaltis NÃO entram no placar do bolão — só servem para saber quem classifica
+    const ftHome = match.score?.fullTime?.home
+    const ftAway = match.score?.fullTime?.away
+    const etHome = match.score?.extraTime?.home   // null se não teve prorrogação
+    const etAway = match.score?.extraTime?.away
+    const penHome = match.score?.penalties?.home  // null se não teve pênaltis
+    const penAway = match.score?.penalties?.away
+
+    // Placar oficial do jogo (sem pênaltis)
+    const finalHome = (etHome != null) ? etHome : ftHome
+    const finalAway = (etAway != null) ? etAway : ftAway
+
+    // Quem se classificou (só mata-mata)
+    let qualifierResult = null
+    if (status === 'finished' && new Date(match.utcDate) >= KNOCKOUT_START) {
+      if (penHome != null && penAway != null) {
+        qualifierResult = penHome > penAway ? match.homeTeam.name : match.awayTeam.name
+      } else if (finalHome != null && finalAway != null && finalHome !== finalAway) {
+        qualifierResult = finalHome > finalAway ? match.homeTeam.name : match.awayTeam.name
+      }
+    }
+
     const matchData = {
       external_id: String(match.id),
       home_team: match.homeTeam.name,
@@ -114,19 +211,34 @@ async function syncMatches() {
       match_date: new Date(match.utcDate).toISOString(),
       stage: mapStage(match.stage),
       group_name: mapGroup(match.group),
-      status: mapStatus(match.status),
+      status,
       stream_url: 'https://www.youtube.com/@CazeTV',
     }
+
     // Só atualiza placar se a API retornou valor real
-    const apiHomeScore = match.score?.fullTime?.home
-    const apiAwayScore = match.score?.fullTime?.away
-    if (apiHomeScore !== null && apiHomeScore !== undefined) matchData.home_score = apiHomeScore
-    if (apiAwayScore !== null && apiAwayScore !== undefined) matchData.away_score = apiAwayScore
+    if (finalHome != null) matchData.home_score = finalHome
+    if (finalAway != null) matchData.away_score = finalAway
 
-    const { error } = await supabase.from('matches').upsert(matchData, { onConflict: 'external_id' })
+    // Pênaltis para exibição no card (Brasil 0 (5) × (4) 0 Argentina)
+    if (penHome != null) matchData.penalty_home = penHome
+    if (penAway != null) matchData.penalty_away = penAway
 
-    if (error) { console.error(`⚠️ Jogo ${match.id}: ${error.message}`); erros++ }
-    else salvos++
+    // Quem se classificou
+    if (qualifierResult) matchData.qualifier_result = qualifierResult
+
+    const { data: upserted, error } = await supabase
+      .from('matches')
+      .upsert(matchData, { onConflict: 'external_id' })
+      .select('id, match_date')
+      .single()
+
+    if (error) { console.error(`⚠️ Jogo ${match.id}: ${error.message}`); erros++; continue }
+    salvos++
+
+    // Recalcula pontos do bolão quando jogo terminou
+    if (status === 'finished' && finalHome != null && finalAway != null && upserted?.id) {
+      await recalcMatchPoints(upserted.id, finalHome, finalAway, qualifierResult, match.utcDate)
+    }
   }
   console.log(`✅ Jogos: ${salvos} salvos | ⏭️ ${pulados} pulados | ❌ ${erros} erros`)
 }
