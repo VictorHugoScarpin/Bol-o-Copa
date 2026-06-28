@@ -206,11 +206,7 @@ async function tryAdvancePhase(matchDate) {
     .is('winner_id', null)
 
   if (!matchups?.length) {
-    // Fase já resolvida ou não inicializada
-    // Se oitavas, inicializa a partir do ranking geral
-    if (phase.key === 'oitavas') {
-      await initOitavas()
-    }
+    // Todos os confrontos desta fase já foram resolvidos (ou fase não tem dados ainda)
     return
   }
 
@@ -284,10 +280,10 @@ async function tryAdvancePhase(matchDate) {
     }
   }
 
-  // Monta confrontos da próxima fase com os vencedores
+  // Monta confrontos da próxima fase respeitando o chaveamento
   const nextPhaseIdx = TOURNAMENT_PHASES.findIndex(ph => ph.key === phase.key) + 1
   if (nextPhaseIdx < TOURNAMENT_PHASES.length) {
-    await seedNextPhase(phase, TOURNAMENT_PHASES[nextPhaseIdx], matchups)
+    await seedNextPhase(phase, TOURNAMENT_PHASES[nextPhaseIdx])
   }
 }
 
@@ -326,16 +322,17 @@ async function calcPlayerPhasePartial(userId, matchIds) {
   }).length
 }
 
+// Fixa o chaveamento das oitavas no banco baseado no ranking geral no momento.
+// Chamada preventivamente sempre que >= 28/06 — tem guard interno para não duplicar.
 async function initOitavas() {
-  // Verifica se oitavas já foram inicializadas
   const { data: existing } = await supabase
     .from('tournament_matchups')
     .select('id')
     .eq('phase', 'oitavas')
     .limit(1)
-  if (existing?.length) return
+  if (existing?.length) return // já fixado, não mexe mais
 
-  console.log('🏆 Inicializando oitavas a partir do ranking geral...')
+  console.log('🏆 Fixando chaveamento das oitavas pelo ranking atual...')
 
   const { data: profiles } = await supabase
     .from('profiles')
@@ -347,30 +344,38 @@ async function initOitavas() {
     .limit(16)
 
   if (!profiles || profiles.length < 2) {
-    console.log('⚠️ Menos de 2 participantes para inicializar oitavas')
+    console.log('⚠️ Menos de 2 participantes para fixar oitavas')
     return
   }
 
+  // Garante 16 slots (preenche com null se tiver menos de 16 participantes)
+  const p = [...profiles]
+  while (p.length < 16) p.push(null)
+
   const rows = []
   for (let i = 0; i < 8; i++) {
-    const p1 = profiles[i]
-    const p2 = profiles[15 - i]
-    if (!p1 || !p2) continue
+    const p1 = p[i]
+    const p2 = p[15 - i]
+    if (!p1 && !p2) continue
     rows.push({
       phase: 'oitavas',
       slot: i,
-      player1_id: p1.id,
-      player2_id: p2.id,
+      player1_id: p1?.id || null,
+      player2_id: p2?.id || null,
     })
   }
 
   const { error } = await supabase.from('tournament_matchups').insert(rows)
-  if (error) console.error('⚠️ Erro ao inicializar oitavas:', error.message)
-  else console.log(`✅ ${rows.length} confrontos de oitavas criados`)
+  if (error) console.error('⚠️ Erro ao fixar oitavas:', error.message)
+  else console.log(`✅ Oitavas fixadas: ${rows.length} confrontos (1ºvs16º, 2ºvs15º...)`)
 }
 
-async function seedNextPhase(currentPhase, nextPhase, resolvedMatchups) {
-  // Verifica se próxima fase já foi criada
+// Monta confrontos da próxima fase respeitando a chave:
+// vencedor do slot 0 enfrenta vencedor do slot 1,
+// vencedor do slot 2 enfrenta vencedor do slot 3, etc.
+// Assim quem é do mesmo lado da chave não se encontra antes da final.
+async function seedNextPhase(currentPhase, nextPhase) {
+  // Guard: próxima fase já criada?
   const { data: existing } = await supabase
     .from('tournament_matchups')
     .select('id')
@@ -378,28 +383,40 @@ async function seedNextPhase(currentPhase, nextPhase, resolvedMatchups) {
     .limit(1)
   if (existing?.length) return
 
-  // Pega todos os matchups da fase atual (com winners) para montar a próxima
+  // Busca todos os matchups da fase atual ordenados por slot
   const { data: allCurrentMatchups } = await supabase
     .from('tournament_matchups')
-    .select('*')
+    .select('slot, winner_id')
     .eq('phase', currentPhase.key)
     .order('slot', { ascending: true })
 
-  const winners = allCurrentMatchups?.map(m => m.winner_id).filter(Boolean) || []
-  if (winners.length < 2) return
+  if (!allCurrentMatchups?.length) return
 
-  console.log(`🏆 Montando ${nextPhase.label} com ${winners.length} vencedores...`)
+  // Todos precisam ter winner para montar a próxima fase
+  const allResolved = allCurrentMatchups.every(m => m.winner_id)
+  if (!allResolved) {
+    console.log(`⏳ ${currentPhase.label}: ainda tem confrontos sem vencedor, aguardando...`)
+    return
+  }
 
-  // Monta confrontos da próxima fase: 1º vs 2º, 3º vs 4º etc (vencedores mantêm o seed original)
+  console.log(`🏆 Montando ${nextPhase.label} pelo chaveamento...`)
+
+  // Emparelha: slot 0 vence → enfrenta vencedor do slot 1
+  //            slot 2 vence → enfrenta vencedor do slot 3, etc.
   const rows = []
-  for (let i = 0; i < Math.floor(winners.length / 2); i++) {
+  for (let i = 0; i < allCurrentMatchups.length; i += 2) {
+    const left = allCurrentMatchups[i]
+    const right = allCurrentMatchups[i + 1]
+    if (!left?.winner_id) continue
     rows.push({
       phase: nextPhase.key,
-      slot: i,
-      player1_id: winners[i * 2],
-      player2_id: winners[i * 2 + 1],
+      slot: Math.floor(i / 2),
+      player1_id: left.winner_id,
+      player2_id: right?.winner_id || null, // null se número ímpar (bye)
     })
   }
+
+  if (!rows.length) return
 
   const { error } = await supabase.from('tournament_matchups').insert(rows)
   if (error) console.error(`⚠️ Erro ao criar ${nextPhase.label}:`, error.message)
@@ -485,6 +502,12 @@ async function syncMatches() {
     }
   }
   console.log(`✅ Jogos: ${salvos} salvos | ⏭️ ${pulados} pulados | ❌ ${erros} erros`)
+
+  // Se já chegamos na data das oitavas, fixa o chaveamento preventivamente
+  // (tem guard interno — só roda uma vez, na primeira execução após 28/06)
+  if (new Date() >= KNOCKOUT_START) {
+    await initOitavas()
+  }
 }
 
 // ── 2. CLASSIFICAÇÃO DOS GRUPOS ─────────────────────────────────────────────
