@@ -918,11 +918,35 @@ function AdversarioTab({ myProfile, bracket, matches, currentPhaseIdx }) {
           const finished = m.status === 'finished'
           const showGuess = matchStarted // só mostra depois que começou
 
+          // Lógica de cor: azul=qualifier, verde=exato, amarelo=parcial, vermelho=errou
+          const qualifierHit = finished && g && m.qualifier_result && g.qualifier_guess === m.qualifier_result
+          const isExact = finished && g && g.home_score === m.home_score && g.away_score === m.away_score
+          const isPartial = finished && g && !isExact && (() => {
+            const rw = m.home_score > m.away_score ? 'home' : m.away_score > m.home_score ? 'away' : 'draw'
+            const gw = g.home_score > g.away_score ? 'home' : g.away_score > g.home_score ? 'away' : 'draw'
+            return rw === gw
+          })()
+          const cardBg = !finished ? 'var(--surface)'
+            : qualifierHit ? 'rgba(59,130,246,0.06)'
+            : isExact ? 'rgba(34,197,94,0.06)'
+            : isPartial ? 'rgba(232,184,75,0.06)'
+            : g ? 'rgba(239,68,68,0.06)' : 'var(--surface)'
+          const cardBorder = !finished ? 'var(--border)'
+            : qualifierHit ? 'rgba(59,130,246,0.35)'
+            : isExact ? 'rgba(34,197,94,0.35)'
+            : isPartial ? 'rgba(232,184,75,0.35)'
+            : g ? 'rgba(239,68,68,0.3)' : 'var(--border)'
+          const guessColor = !finished ? '#c084fc'
+            : qualifierHit ? '#60a5fa'
+            : isExact ? 'var(--green)'
+            : isPartial ? 'var(--gold)'
+            : 'var(--red)'
+
           return (
             <div key={m.id} style={{
               position: 'relative', overflow: 'hidden',
-              background: finished ? (g?.points_earned > 0 ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)') : 'var(--surface)',
-              border: `1px solid ${finished ? (g?.points_earned > 0 ? 'rgba(34,197,94,0.35)' : 'rgba(239,68,68,0.3)') : 'var(--border)'}`,
+              background: cardBg,
+              border: `1px solid ${cardBorder}`,
               borderRadius: '14px', marginBottom: '10px',
             }}>
               <CardBg name={m.home_team} side="left" />
@@ -965,11 +989,11 @@ function AdversarioTab({ myProfile, bracket, matches, currentPhaseIdx }) {
                     <span style={{ fontSize: '10px', color: 'var(--text-3)' }}>sem palpite</span>
                   ) : (
                     <>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: '20px', color: finished ? (g.points_earned > 0 ? 'var(--green)' : 'var(--red)') : '#c084fc', letterSpacing: '0.06em', lineHeight: 1 }}>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: '20px', color: guessColor, letterSpacing: '0.06em', lineHeight: 1 }}>
                         {g.home_score} × {g.away_score}
                       </div>
                       {finished && (
-                        <div style={{ fontSize: '10px', color: g.points_earned > 0 ? 'var(--green)' : 'var(--text-3)', marginTop: '3px' }}>
+                        <div style={{ fontSize: '10px', color: guessColor, marginTop: '3px' }}>
                           {g.points_earned > 0 ? `+${g.points_earned}pt` : '0pt'}
                         </div>
                       )}
