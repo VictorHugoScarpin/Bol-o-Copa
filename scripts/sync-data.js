@@ -78,11 +78,11 @@ function mapStatus(status) {
 
 function mapStage(stage) {
   if (stage === 'GROUP_STAGE') return 'Grupos'
-  if (stage === 'ROUND_OF_16') return 'Oitavas'
-  if (stage === 'QUARTER_FINALS') return 'Quartas'
-  if (stage === 'SEMI_FINALS') return 'Semis'
+  if (stage === 'ROUND_OF_16' || stage === 'LAST_32') return 'Oitavas'
+  if (stage === 'QUARTER_FINALS' || stage === 'LAST_16') return 'Quartas'
+  if (stage === 'SEMI_FINALS' || stage === 'LAST_8') return 'Semis'
   if (stage === 'THIRD_PLACE') return '3º Lugar'
-  if (stage === 'FINAL') return 'Final'
+  if (stage === 'FINAL' || stage === 'LAST_4') return 'Final'
   return stage || 'Grupos'
 }
 
@@ -185,12 +185,13 @@ async function tryAdvancePhase(matchDate) {
   const phase = getPhaseForDate(matchDate)
   if (!phase) return // jogo da fase de grupos, ignora
 
-  // Verifica se todos os jogos desta fase já terminaram
+  // Verifica se todos os jogos desta fase já terminaram (exclui jogos de grupos)
   const { data: phaseMatches } = await supabase
     .from('matches')
     .select('id, status')
     .gte('match_date', phase.start + 'T00:00:00Z')
     .lte('match_date', phase.end + 'T23:59:59Z')
+    .neq('stage', 'Grupos')
 
   if (!phaseMatches?.length) return
   const allFinished = phaseMatches.every(m => m.status === 'finished')
