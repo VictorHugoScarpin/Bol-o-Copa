@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { format, differenceInSeconds, parseISO, startOfDay } from 'date-fns'
@@ -7,8 +7,7 @@ import { QuizBanner } from '../lib/quizBanner'
 
 const LOCK_SECS = 60
 
-// ── Mapas idênticos ao MatchesPage ──────────────────────────────────────────
-
+// ── Mapas ────────────────────────────────────────────────────────────────────
 
 const TEAM_ISO = {
   'Brazil': 'br', 'Argentina': 'ar', 'France': 'fr', 'Germany': 'de',
@@ -28,8 +27,7 @@ const TEAM_ISO = {
   'Czechia': 'cz', 'Czech Republic': 'cz', 'Slovenia': 'si',
   'Algeria': 'dz', 'Egypt': 'eg', 'New Zealand': 'nz',
   "Côte d'Ivoire": 'ci', 'Ivory Coast': 'ci',
-  'Guatemala': 'gt', 'El Salvador': 'sv',
-  'South Africa': 'za',
+  'Guatemala': 'gt', 'El Salvador': 'sv', 'South Africa': 'za',
   'Bosnia and Herzegovina': 'ba', 'Bosnia & Herzegovina': 'ba',
   'Bosnia Herzegovina': 'ba', 'Bosna i Hercegovina': 'ba', 'Bosnia-Herzegovina': 'ba',
   'Haiti': 'ht', 'Curaçao': 'cw', 'Curacao': 'cw',
@@ -116,16 +114,12 @@ function getPT(name) {
   return TEAM_PT[name] || name
 }
 
-// Bolinha: bandeira, cover 100%
+// ── Componentes visuais base ─────────────────────────────────────────────────
+
 function TeamCircle({ name, size = 46 }) {
   const flagUrl = getFlagUrl(name)
   return (
-    <div style={{
-      width: size, height: size,
-      borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
-      border: '2px solid rgba(255,255,255,0.18)',
-      background: 'var(--surface)',
-    }}>
+    <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '2px solid rgba(255,255,255,0.18)', background: 'var(--surface)' }}>
       {flagUrl
         ? <img src={flagUrl} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.42 }}>🏳️</div>
@@ -134,31 +128,37 @@ function TeamCircle({ name, size = 46 }) {
   )
 }
 
-// Fundo do card: bandeira preenchendo cada lado com fade no centro
 function CardBg({ name, side }) {
   const flagUrl = getFlagUrl(name)
   if (!flagUrl) return null
   const gradientDir = side === 'left' ? 'to right' : 'to left'
   return (
-    <div style={{
-      position: 'absolute', top: 0, bottom: 0, [side]: 0,
-      width: '50%', overflow: 'hidden', pointerEvents: 'none',
-    }}>
-      <img src={flagUrl} alt="" style={{
-        position: 'absolute', inset: 0, width: '100%', height: '100%',
-        objectFit: 'cover', opacity: 0.18, filter: 'saturate(1.4)',
-      }} onError={e => { e.target.style.display = 'none' }} />
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: `linear-gradient(${gradientDir}, transparent 20%, rgba(6,11,20,0.85) 100%)`,
-      }} />
+    <div style={{ position: 'absolute', top: 0, bottom: 0, [side]: 0, width: '50%', overflow: 'hidden', pointerEvents: 'none' }}>
+      <img src={flagUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.18, filter: 'saturate(1.4)' }} onError={e => { e.target.style.display = 'none' }} />
+      <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${gradientDir}, transparent 20%, rgba(6,11,20,0.85) 100%)` }} />
     </div>
   )
 }
 
-// ── Utilitários ──────────────────────────────────────────────────────────────
+function Avatar({ profile, size = 36 }) {
+  if (profile?.avatar_url) {
+    return <img src={profile.avatar_url} alt="" style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--border-strong)' }} />
+  }
+  const name = profile?.display_name || profile?.nick || '?'
+  const initials = name.slice(0, 2).toUpperCase()
+  const colors = ['#e8b84b', '#1db954', '#4d8ef0', '#f03e3e', '#a855f7']
+  const color = colors[initials.charCodeAt(0) % colors.length]
+  return (
+    <div style={{ width: size, height: size, borderRadius: '50%', background: `${color}1a`, border: `2px solid ${color}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: size * 0.36, color, flexShrink: 0, fontFamily: 'var(--font-display)', letterSpacing: '0.04em' }}>
+      {initials}
+    </div>
+  )
+}
 
-const MATCH_DURATION_MS = 130 * 60 * 1000 // 2h10min
+// ── Utilitários ───────────────────────────────────────────────────────────────
+
+const MATCH_DURATION_MS = 130 * 60 * 1000
+const KNOCKOUT_START = new Date('2026-06-28T00:00:00')
 
 function isLocked(dateStr) { return differenceInSeconds(parseISO(dateStr), new Date()) <= LOCK_SECS }
 function isMatchLive(match) {
@@ -167,16 +167,16 @@ function isMatchLive(match) {
   const now = Date.now()
   return now >= start && now <= start + MATCH_DURATION_MS
 }
-
+function isKnockout(match) { return parseISO(match.match_date) >= KNOCKOUT_START }
 function countdown(dateStr) {
   const diff = differenceInSeconds(parseISO(dateStr), new Date())
   if (diff <= 0) return null
-  if (diff > 3600) return format(parseISO(dateStr), "HH:mm", { locale: ptBR })
+  if (diff > 3600) return format(parseISO(dateStr), 'HH:mm', { locale: ptBR })
   const m = Math.floor(diff / 60), s = diff % 60
   return `${m}m ${s.toString().padStart(2, '0')}s`
 }
 
-// ── ResenhaList ──────────────────────────────────────────────────────────────
+// ── ResenhaList ───────────────────────────────────────────────────────────────
 
 function getGuessResult(g, matchHomeScore, matchAwayScore) {
   if (matchHomeScore == null || matchAwayScore == null) return 'pending'
@@ -217,14 +217,7 @@ function ResenhaList({ matchId, matchHomeScore, matchAwayScore }) {
   )
 }
 
-// ── GuessCard ────────────────────────────────────────────────────────────────
-
-// Mata-mata começa em 28/06/2026
-const KNOCKOUT_START = new Date('2026-06-28T00:00:00')
-
-function isKnockout(match) {
-  return parseISO(match.match_date) >= KNOCKOUT_START
-}
+// ── GuessCard ─────────────────────────────────────────────────────────────────
 
 function GuessCard({ match, myGuess, onSave }) {
   const finished = match.status === 'finished'
@@ -255,12 +248,10 @@ function GuessCard({ match, myGuess, onSave }) {
   })()
   const wrong = finished && myGuess && !correct && !partialCorrect
 
-  // Qualifier (mata-mata)
-  const qualifierResult = match.qualifier_result // time classificado real (vem do banco)
-  const qualifierGuess = myGuess?.qualifier_guess // palpite do usuário
+  const qualifierResult = match.qualifier_result
+  const qualifierGuess = myGuess?.qualifier_guess
   const qualifierCorrect = knockout && finished && qualifierResult && qualifierGuess && qualifierGuess === qualifierResult
 
-  // Pontos totais exibidos no badge
   let totalPts = null
   if (finished && myGuess) {
     let pts = correct ? 3 : partialCorrect ? 1 : 0
@@ -287,73 +278,52 @@ function GuessCard({ match, myGuess, onSave }) {
     : live ? 'rgba(239,68,68,0.04)' : 'var(--surface)'
 
   return (
-    <div style={{
-      position: 'relative', overflow: 'hidden',
-      background: bgColor, border: `1px solid ${borderColor}`,
-      borderRadius: '14px', marginBottom: '10px',
-    }}>
+    <div style={{ position: 'relative', overflow: 'hidden', background: bgColor, border: `1px solid ${borderColor}`, borderRadius: '14px', marginBottom: '10px' }}>
       <CardBg name={match.home_team} side="left" />
       <CardBg name={match.away_team} side="right" />
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none',
-        background: 'radial-gradient(ellipse 40% 80% at 50% 50%, rgba(6,11,20,0.55) 0%, transparent 100%)',
-      }} />
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse 40% 80% at 50% 50%, rgba(6,11,20,0.55) 0%, transparent 100%)' }} />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
-        {/* Header clicável */}
-        <div
-          onClick={() => !finished && setExpanded(e => !e)}
-          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', cursor: finished ? 'default' : 'pointer', position: 'relative' }}
-        >
-          {/* Times no header — bolinhas em coluna vertical alinhada */}
+        <div onClick={() => !finished && setExpanded(e => !e)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', cursor: finished ? 'default' : 'pointer', position: 'relative' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
-            {/* Coluna das bolinhas — sempre na mesma posição X */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0 }}>
               <TeamCircle name={match.home_team} size={28} />
               <TeamCircle name={match.away_team} size={28} />
             </div>
-            {/* Coluna dos nomes */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minWidth: 0 }}>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {getPT(match.home_team)}
-              </span>
-              <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {getPT(match.away_team)}
-              </span>
+              <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getPT(match.home_team)}</span>
+              <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getPT(match.away_team)}</span>
             </div>
           </div>
-            {/* Horário/placar + venue — centralizado no card */}
-            <div style={{ position: 'absolute', left: '50%', transform: 'translate(-50%, -50%)', top: '50%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-              {finished ? (
-                match.penalty_home != null && match.penalty_away != null ? (
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: '14px', color: 'var(--text)', letterSpacing: '0.03em', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '1px' }}>
-                    {match.home_score}
-                    <span style={{ fontSize: '11px', color: 'rgba(240,244,255,0.5)', margin: '0 1px' }}>({match.penalty_home})</span>
-                    <span style={{ color: 'rgba(240,244,255,0.3)', margin: '0 2px' }}>×</span>
-                    <span style={{ fontSize: '11px', color: 'rgba(240,244,255,0.5)', margin: '0 1px' }}>({match.penalty_away})</span>
-                    {match.away_score}
-                  </span>
-                ) : (
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: '18px', color: 'var(--text)', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
-                    {match.home_score} × {match.away_score}
-                  </span>
-                )
-              ) : (
-                <span style={{ fontFamily: 'var(--font-display)', fontSize: '14px', color: 'var(--gold)', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
-                  {live ? '🔴' : cd || '–'}
-                </span>
-              )}
-              {match.penalty_home != null && finished && (
-                <span style={{ fontSize: '8px', color: 'rgba(240,244,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Pênaltis</span>
-              )}
-              {match.venue && (
-                <span style={{ fontSize: '9px', color: 'var(--text-3)', whiteSpace: 'nowrap', letterSpacing: '0.03em' }}>
-                  {match.venue}
-                </span>
-              )}
-            </div>
 
-          {/* Badges + ações */}
+          <div style={{ position: 'absolute', left: '50%', transform: 'translate(-50%, -50%)', top: '50%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+            {finished ? (
+              match.penalty_home != null && match.penalty_away != null ? (
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: '14px', color: 'var(--text)', letterSpacing: '0.03em', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '1px' }}>
+                  {match.home_score}
+                  <span style={{ fontSize: '11px', color: 'rgba(240,244,255,0.5)', margin: '0 1px' }}>({match.penalty_home})</span>
+                  <span style={{ color: 'rgba(240,244,255,0.3)', margin: '0 2px' }}>×</span>
+                  <span style={{ fontSize: '11px', color: 'rgba(240,244,255,0.5)', margin: '0 1px' }}>({match.penalty_away})</span>
+                  {match.away_score}
+                </span>
+              ) : (
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: '18px', color: 'var(--text)', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
+                  {match.home_score} × {match.away_score}
+                </span>
+              )
+            ) : (
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: '14px', color: 'var(--gold)', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
+                {live ? '🔴' : cd || '–'}
+              </span>
+            )}
+            {match.penalty_home != null && finished && (
+              <span style={{ fontSize: '8px', color: 'rgba(240,244,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Pênaltis</span>
+            )}
+            {match.venue && (
+              <span style={{ fontSize: '9px', color: 'var(--text-3)', whiteSpace: 'nowrap', letterSpacing: '0.03em' }}>{match.venue}</span>
+            )}
+          </div>
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             {finished
               ? totalPts === 5
@@ -370,10 +340,7 @@ function GuessCard({ match, myGuess, onSave }) {
               : <span className="badge badge-muted" style={{ fontSize: '9px' }}>sem palpite</span>
             }
             {locked && (
-              <button
-                onClick={e => { e.stopPropagation(); setPopoverOpen(o => !o) }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: popoverOpen ? 'var(--gold)' : 'var(--text-3)', padding: '4px', display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'center' }}
-              >
+              <button onClick={e => { e.stopPropagation(); setPopoverOpen(o => !o) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: popoverOpen ? 'var(--gold)' : 'var(--text-3)', padding: '4px', display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'center' }}>
                 {[0, 1, 2].map(i => <span key={i} style={{ display: 'block', width: '14px', height: '2px', background: 'currentColor', borderRadius: '1px' }} />)}
               </button>
             )}
@@ -383,7 +350,6 @@ function GuessCard({ match, myGuess, onSave }) {
           </div>
         </div>
 
-        {/* Popover palpites da galera — só aparece quando jogo travado/iniciado */}
         {popoverOpen && locked && (
           <div style={{ margin: '0 16px 12px', background: 'rgba(6,11,20,0.95)', border: '1px solid var(--border-strong)', borderRadius: 'var(--r-md)', padding: '10px 12px', animation: 'fadeUp 0.15s ease' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -394,15 +360,12 @@ function GuessCard({ match, myGuess, onSave }) {
           </div>
         )}
 
-        {/* Corpo expandido */}
         {expanded && (
           <div style={{ padding: '0 16px 14px', animation: 'fadeUp 0.2s ease' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
                 <TeamCircle name={match.home_team} size={44} />
-                <span style={{ fontSize: '11px', fontWeight: 600, textAlign: 'center', lineHeight: 1.2, color: 'var(--text-2)' }}>
-                  {getPT(match.home_team)}
-                </span>
+                <span style={{ fontSize: '11px', fontWeight: 600, textAlign: 'center', lineHeight: 1.2, color: 'var(--text-2)' }}>{getPT(match.home_team)}</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', flexShrink: 0 }}>
                 <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
@@ -414,9 +377,7 @@ function GuessCard({ match, myGuess, onSave }) {
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
                 <TeamCircle name={match.away_team} size={44} />
-                <span style={{ fontSize: '11px', fontWeight: 600, textAlign: 'center', lineHeight: 1.2, color: 'var(--text-2)' }}>
-                  {getPT(match.away_team)}
-                </span>
+                <span style={{ fontSize: '11px', fontWeight: 600, textAlign: 'center', lineHeight: 1.2, color: 'var(--text-2)' }}>{getPT(match.away_team)}</span>
               </div>
             </div>
 
@@ -426,30 +387,20 @@ function GuessCard({ match, myGuess, onSave }) {
               </button>
             )}
 
-            {/* Seção mata-mata: quem se classifica */}
             {knockout && (
               <div style={{ marginTop: '14px', padding: '12px 14px', borderRadius: '10px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.25)' }}>
                 <div style={{ fontSize: '10px', fontWeight: 700, color: '#60a5fa', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>
                   🏆 Quem se classifica? <span style={{ fontSize: '9px', color: 'rgba(96,165,250,0.6)', fontWeight: 400 }}>+2pts bônus</span>
                 </div>
-
                 {finished ? (
-                  // Jogo encerrado: mostra resultado
                   <div style={{ display: 'flex', gap: '8px' }}>
                     {[match.home_team, match.away_team].map(team => {
                       const isClassified = qualifierResult === team
                       const wasGuessed = qualifierGuess === team
                       return (
-                        <div key={team} style={{
-                          flex: 1, display: 'flex', alignItems: 'center', gap: '8px',
-                          padding: '8px 10px', borderRadius: '8px',
-                          background: isClassified ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.03)',
-                          border: `1px solid ${isClassified ? 'rgba(59,130,246,0.5)' : 'rgba(255,255,255,0.07)'}`,
-                        }}>
+                        <div key={team} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '8px', background: isClassified ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.03)', border: `1px solid ${isClassified ? 'rgba(59,130,246,0.5)' : 'rgba(255,255,255,0.07)'}` }}>
                           <TeamCircle name={team} size={24} />
-                          <span style={{ fontSize: '11px', fontWeight: 600, color: isClassified ? '#93c5fd' : 'var(--text-3)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {getPT(team)}
-                          </span>
+                          <span style={{ fontSize: '11px', fontWeight: 600, color: isClassified ? '#93c5fd' : 'var(--text-3)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getPT(team)}</span>
                           {isClassified && wasGuessed && <span style={{ fontSize: '11px', color: '#60a5fa' }}>✓ +2</span>}
                           {isClassified && !wasGuessed && <span style={{ fontSize: '10px', color: 'var(--text-3)' }}>✓</span>}
                         </div>
@@ -457,43 +408,26 @@ function GuessCard({ match, myGuess, onSave }) {
                     })}
                   </div>
                 ) : locked ? (
-                  // Travado: mostra palpite registrado (somente leitura)
                   <div style={{ display: 'flex', gap: '8px' }}>
                     {[match.home_team, match.away_team].map(team => {
                       const chosen = qualifierGuess === team || qualifier === team
                       return (
-                        <div key={team} style={{
-                          flex: 1, display: 'flex', alignItems: 'center', gap: '8px',
-                          padding: '8px 10px', borderRadius: '8px',
-                          background: chosen ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.03)',
-                          border: `1px solid ${chosen ? 'rgba(59,130,246,0.45)' : 'rgba(255,255,255,0.07)'}`,
-                        }}>
+                        <div key={team} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '8px', background: chosen ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.03)', border: `1px solid ${chosen ? 'rgba(59,130,246,0.45)' : 'rgba(255,255,255,0.07)'}` }}>
                           <TeamCircle name={team} size={24} />
-                          <span style={{ fontSize: '11px', fontWeight: 600, color: chosen ? '#93c5fd' : 'var(--text-3)', flex: 1 }}>
-                            {getPT(team)}
-                          </span>
+                          <span style={{ fontSize: '11px', fontWeight: 600, color: chosen ? '#93c5fd' : 'var(--text-3)', flex: 1 }}>{getPT(team)}</span>
                           {chosen && <span style={{ fontSize: '10px', color: '#60a5fa' }}>🔒</span>}
                         </div>
                       )
                     })}
                   </div>
                 ) : (
-                  // Aberto: botões para selecionar
                   <div style={{ display: 'flex', gap: '8px' }}>
                     {[match.home_team, match.away_team].map(team => {
                       const chosen = qualifier === team
                       return (
-                        <button key={team} onClick={() => setQualifier(chosen ? '' : team)} style={{
-                          flex: 1, display: 'flex', alignItems: 'center', gap: '8px',
-                          padding: '9px 10px', borderRadius: '8px', cursor: 'pointer',
-                          background: chosen ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.04)',
-                          border: `1.5px solid ${chosen ? 'rgba(59,130,246,0.6)' : 'rgba(255,255,255,0.1)'}`,
-                          transition: 'all 0.15s',
-                        }}>
+                        <button key={team} onClick={() => setQualifier(chosen ? '' : team)} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 10px', borderRadius: '8px', cursor: 'pointer', background: chosen ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.04)', border: `1.5px solid ${chosen ? 'rgba(59,130,246,0.6)' : 'rgba(255,255,255,0.1)'}`, transition: 'all 0.15s' }}>
                           <TeamCircle name={team} size={24} />
-                          <span style={{ fontSize: '11px', fontWeight: 600, color: chosen ? '#93c5fd' : 'var(--text-2)', flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {getPT(team)}
-                          </span>
+                          <span style={{ fontSize: '11px', fontWeight: 600, color: chosen ? '#93c5fd' : 'var(--text-2)', flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getPT(team)}</span>
                           {chosen && <span style={{ fontSize: '10px', color: '#60a5fa' }}>✓</span>}
                         </button>
                       )
@@ -509,15 +443,12 @@ function GuessCard({ match, myGuess, onSave }) {
   )
 }
 
-// ── MasterGuess ──────────────────────────────────────────────────────────────
+// ── FlagCircle / TeamPicker / MasterGuess ─────────────────────────────────────
 
 function FlagCircle({ name, size = 28 }) {
   const url = getFlagUrl(name)
   return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
-      border: '1.5px solid rgba(255,255,255,0.15)', background: 'var(--surface)',
-    }}>
+    <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1.5px solid rgba(255,255,255,0.15)', background: 'var(--surface)' }}>
       {url
         ? <img src={url} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none' }} />
         : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', fontSize: size * 0.5 }}>🏳️</div>
@@ -533,12 +464,7 @@ function TeamPicker({ value, onChange, placeholder, exclude, teams }) {
 
   return (
     <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-      <button onClick={() => setOpen(o => !o)} style={{
-        width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
-        padding: '9px 10px', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)',
-        background: 'var(--surface)', cursor: 'pointer', fontSize: '13px',
-        color: selected ? 'var(--text)' : 'var(--text-3)',
-      }}>
+      <button onClick={() => setOpen(o => !o)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 10px', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)', cursor: 'pointer', fontSize: '13px', color: selected ? 'var(--text)' : 'var(--text-3)' }}>
         {selected
           ? <><FlagCircle name={selected.name} size={24} /><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{TEAM_PT[selected.name] || selected.name}</span></>
           : <span>{placeholder}</span>
@@ -546,19 +472,9 @@ function TeamPicker({ value, onChange, placeholder, exclude, teams }) {
         <span style={{ marginLeft: 'auto', color: 'var(--text-3)', fontSize: '10px' }}>▼</span>
       </button>
       {open && (
-        <div style={{
-          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
-          background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)',
-          maxHeight: '220px', overflowY: 'auto', marginTop: '4px',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-        }}>
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', maxHeight: '220px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
           {options.map(t => (
-            <div key={t.name} onClick={() => { onChange(t.name); setOpen(false) }} style={{
-              display: 'flex', alignItems: 'center', gap: '10px',
-              padding: '8px 12px', cursor: 'pointer', fontSize: '13px',
-              background: value === t.name ? 'rgba(232,184,75,0.1)' : 'transparent',
-              color: value === t.name ? 'var(--gold)' : 'var(--text)',
-            }}>
+            <div key={t.name} onClick={() => { onChange(t.name); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', cursor: 'pointer', fontSize: '13px', background: value === t.name ? 'rgba(232,184,75,0.1)' : 'transparent', color: value === t.name ? 'var(--gold)' : 'var(--text)' }}>
               <FlagCircle name={t.name} size={26} />
               <span>{TEAM_PT[t.name] || t.name}</span>
             </div>
@@ -580,16 +496,12 @@ function MasterGuess({ userId }) {
   useEffect(() => {
     supabase.from('master_guess').select('*').eq('user_id', userId).single()
       .then(({ data }) => { if (data) { setExisting(data); setT1(data.team1); setT2(data.team2) } })
-
-    // Busca times únicos dos jogos
     supabase.from('matches').select('home_team, away_team')
       .then(({ data }) => {
         if (!data) return
         const set = new Set()
         data.forEach(m => { set.add(m.home_team); set.add(m.away_team) })
-        const sorted = [...set].filter(Boolean).sort((a, b) =>
-          (TEAM_PT[a] || a).localeCompare(TEAM_PT[b] || b, 'pt')
-        ).map(name => ({ name }))
+        const sorted = [...set].filter(Boolean).sort((a, b) => (TEAM_PT[a] || a).localeCompare(TEAM_PT[b] || b, 'pt')).map(name => ({ name }))
         setTeams(sorted)
       })
   }, [userId])
@@ -643,7 +555,7 @@ function MasterGuess({ userId }) {
   )
 }
 
-// ── RegrasTab ────────────────────────────────────────────────────────────────
+// ── RegrasTab ─────────────────────────────────────────────────────────────────
 
 function RegrasTab() {
   return (
@@ -728,7 +640,462 @@ function RegrasTab() {
   )
 }
 
-// ── GuessesPage ──────────────────────────────────────────────────────────────
+// ── Copa Yuuto Kidou ──────────────────────────────────────────────────────────
+
+// Fases e janelas de datas
+const TOURNAMENT_PHASES = [
+  { key: 'oitavas', label: 'Oitavas', shortLabel: 'Oitavas', bonus: 3, start: '2026-06-28', end: '2026-07-03', round: 1 },
+  { key: 'quartas', label: 'Quartas', shortLabel: 'Quartas', bonus: 4, start: '2026-07-04', end: '2026-07-07', round: 2 },
+  { key: 'semi',   label: 'Semifinal', shortLabel: 'Semi',  bonus: 5, start: '2026-07-09', end: '2026-07-11', round: 3 },
+  { key: 'final',  label: 'Final',    shortLabel: 'Final',  bonus: 6, start: '2026-07-14', end: '2026-07-15', round: 4 },
+]
+
+function getCurrentPhase() {
+  const today = new Date()
+  // Retorna a fase mais recente que já começou
+  for (let i = TOURNAMENT_PHASES.length - 1; i >= 0; i--) {
+    if (today >= new Date(TOURNAMENT_PHASES[i].start + 'T00:00:00')) return i
+  }
+  return 0
+}
+
+// Seed do bracket (1º vs 16º, 2º vs 15º, etc.) — determinístico pelo ranking
+// Chave A: confrontos 1,3,5,7 (posições 0,2,4,6 e 15,13,11,9)
+// Chave B: confrontos 2,4,6,8 (posições 1,3,5,7 e 14,12,10,8)
+function buildBracket(top16) {
+  // top16 = array de 16 profiles ordenados por ranking
+  const matchups = []
+  for (let i = 0; i < 8; i++) {
+    matchups.push({ p1: top16[i], p2: top16[15 - i], slot: i })
+  }
+  // Chave A: slots 0,2,4,6  Chave B: slots 1,3,5,7
+  const chaveA = [matchups[0], matchups[2], matchups[4], matchups[6]]
+  const chaveB = [matchups[1], matchups[3], matchups[5], matchups[7]]
+  return { chaveA, chaveB }
+}
+
+// Calcula pontos de um usuário dentro de uma janela de datas
+function usePhasePoints(userId, phase) {
+  const [data, setData] = useState(null)
+
+  useEffect(() => {
+    if (!userId || !phase) return
+    const start = phase.start + 'T00:00:00'
+    const end = phase.end + 'T23:59:59'
+
+    supabase
+      .from('guesses')
+      .select('points_earned, matches(match_date, status)')
+      .eq('user_id', userId)
+      .then(({ data: guesses }) => {
+        const filtered = (guesses || []).filter(g => {
+          const md = g.matches?.match_date
+          if (!md) return false
+          const d = new Date(md)
+          return d >= new Date(start) && d <= new Date(end) && g.matches?.status === 'finished'
+        })
+        const pts = filtered.reduce((sum, g) => sum + (g.points_earned || 0), 0)
+        setData(pts)
+      })
+  }, [userId, phase])
+
+  return data
+}
+
+// Busca palpites de um user na fase atual para exibir no card Adversário
+function useOpponentGuesses(opponentId, phase, matches) {
+  const [guesses, setGuesses] = useState(null)
+
+  useEffect(() => {
+    if (!opponentId || !phase || !matches?.length) return
+    const start = new Date(phase.start + 'T00:00:00')
+    const end = new Date(phase.end + 'T23:59:59')
+
+    const phaseMatchIds = matches
+      .filter(m => {
+        const d = new Date(m.match_date)
+        return d >= start && d <= end
+      })
+      .map(m => m.id)
+
+    if (!phaseMatchIds.length) { setGuesses([]); return }
+
+    supabase
+      .from('guesses')
+      .select('*')
+      .eq('user_id', opponentId)
+      .in('match_id', phaseMatchIds)
+      .then(({ data }) => setGuesses(data || []))
+  }, [opponentId, phase, matches])
+
+  return guesses
+}
+
+// Card do adversário na fase atual
+function AdversarioTab({ myProfile, bracket, matches, currentPhaseIdx }) {
+  const phase = TOURNAMENT_PHASES[currentPhaseIdx]
+
+  // Acha o confronto do usuário atual nas oitavas
+  const myMatchup = useMemo(() => {
+    if (!bracket || !myProfile) return null
+    const all = [...bracket.chaveA, ...bracket.chaveB]
+    return all.find(m => m.p1?.id === myProfile.id || m.p2?.id === myProfile.id) || null
+  }, [bracket, myProfile])
+
+  const opponent = myMatchup
+    ? (myMatchup.p1?.id === myProfile?.id ? myMatchup.p2 : myMatchup.p1)
+    : null
+
+  const opGuesses = useOpponentGuesses(opponent?.id, phase, matches)
+
+  // Pontos do oponente na fase
+  const [opPoints, setOpPoints] = useState(null)
+  const [myPoints, setMyPoints] = useState(null)
+
+  useEffect(() => {
+    if (!opponent?.id || !phase) return
+    const start = new Date(phase.start + 'T00:00:00')
+    const end = new Date(phase.end + 'T23:59:59')
+
+    async function fetchPts(uid, setter) {
+      const { data } = await supabase
+        .from('guesses')
+        .select('points_earned, matches(match_date, status)')
+        .eq('user_id', uid)
+      const pts = (data || []).filter(g => {
+        const md = g.matches?.match_date
+        if (!md) return false
+        const d = new Date(md)
+        return d >= start && d <= end && g.matches?.status === 'finished'
+      }).reduce((s, g) => s + (g.points_earned || 0), 0)
+      setter(pts)
+    }
+
+    if (myProfile?.id) fetchPts(myProfile.id, setMyPoints)
+    fetchPts(opponent.id, setOpPoints)
+  }, [opponent, phase, myProfile])
+
+  const phaseMatches = useMemo(() => {
+    if (!matches || !phase) return []
+    const start = new Date(phase.start + 'T00:00:00')
+    const end = new Date(phase.end + 'T23:59:59')
+    return matches.filter(m => {
+      const d = new Date(m.match_date)
+      return d >= start && d <= end
+    }).sort((a, b) => new Date(a.match_date) - new Date(b.match_date))
+  }, [matches, phase])
+
+  if (!myMatchup || !opponent) {
+    return (
+      <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-3)' }}>
+        <div style={{ fontSize: '32px', marginBottom: '12px' }}>🏆</div>
+        <div style={{ fontSize: '14px' }}>Você não está no chaveamento desta fase.</div>
+      </div>
+    )
+  }
+
+  const opGuessMap = {}
+  ;(opGuesses || []).forEach(g => { opGuessMap[g.match_id] = g })
+
+  return (
+    <div>
+      {/* Card do confronto */}
+      <div className="glass-card" style={{ padding: '20px', marginBottom: '16px', border: '1px solid rgba(168,85,247,0.3)', background: 'rgba(168,85,247,0.04)' }}>
+        <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(168,85,247,0.8)', letterSpacing: '0.12em', textTransform: 'uppercase', textAlign: 'center', marginBottom: '16px' }}>
+          ⚔️ {phase.label} · Copa Yuuto Kidou
+        </div>
+
+        {/* VS card */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Você */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            <Avatar profile={myProfile} size={52} />
+            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--gold)', textAlign: 'center', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {myProfile.display_name || myProfile.nick}
+            </div>
+            <div style={{ fontSize: '10px', color: 'var(--text-3)' }}>você</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '28px', color: myPoints > opPoints ? 'var(--green)' : myPoints < opPoints ? 'var(--red)' : 'var(--text)', lineHeight: 1 }}>
+              {myPoints ?? '–'}
+            </div>
+            <div style={{ fontSize: '9px', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>pts na fase</div>
+          </div>
+
+          {/* VS */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '22px', color: 'rgba(168,85,247,0.7)', letterSpacing: '0.1em' }}>VS</div>
+            <div style={{ width: '1px', height: '40px', background: 'rgba(168,85,247,0.2)' }} />
+          </div>
+
+          {/* Adversário */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            <Avatar profile={opponent} size={52} />
+            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)', textAlign: 'center', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {opponent.display_name || opponent.nick}
+            </div>
+            <div style={{ fontSize: '10px', color: 'var(--text-3)' }}>adversário</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '28px', color: opPoints > myPoints ? 'var(--green)' : opPoints < myPoints ? 'var(--red)' : 'var(--text)', lineHeight: 1 }}>
+              {opPoints ?? '–'}
+            </div>
+            <div style={{ fontSize: '9px', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>pts na fase</div>
+          </div>
+        </div>
+
+        {myPoints !== null && opPoints !== null && (
+          <div style={{ marginTop: '14px', padding: '8px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.04)', textAlign: 'center', fontSize: '12px', color: 'var(--text-3)' }}>
+            {myPoints > opPoints
+              ? <span style={{ color: 'var(--green)' }}>✅ Você está na frente! Segura que tá bom...</span>
+              : myPoints < opPoints
+              ? <span style={{ color: 'var(--red)' }}>📉 Você está atrás. Vai que vira!</span>
+              : <span style={{ color: 'var(--gold)' }}>⚖️ Empatado! O desempate decide.</span>
+            }
+          </div>
+        )}
+      </div>
+
+      {/* Bônus da fase */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+        {TOURNAMENT_PHASES.map((ph, i) => (
+          <div key={ph.key} style={{
+            flex: 1, padding: '8px 6px', borderRadius: '8px', textAlign: 'center',
+            background: i === currentPhaseIdx ? 'rgba(168,85,247,0.15)' : 'var(--surface)',
+            border: `1px solid ${i === currentPhaseIdx ? 'rgba(168,85,247,0.4)' : 'var(--border)'}`,
+            opacity: i > currentPhaseIdx ? 0.4 : 1,
+          }}>
+            <div style={{ fontSize: '9px', color: i === currentPhaseIdx ? 'rgba(168,85,247,0.8)' : 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{ph.shortLabel}</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: i < currentPhaseIdx ? 'var(--green)' : i === currentPhaseIdx ? '#c084fc' : 'var(--text-3)', marginTop: '2px' }}>+{ph.bonus}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Título palpites adversário */}
+      <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(168,85,247,0.7)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px' }}>
+        🔍 Palpites de {opponent.display_name || opponent.nick} na fase
+      </div>
+
+      {opGuesses === null ? (
+        Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton" style={{ height: 56, marginBottom: 8, borderRadius: 12 }} />)
+      ) : phaseMatches.length === 0 ? (
+        <div style={{ textAlign: 'center', color: 'var(--text-3)', padding: '20px 0', fontSize: '13px' }}>Nenhum jogo nesta fase ainda.</div>
+      ) : (
+        phaseMatches.map(m => {
+          const g = opGuessMap[m.id]
+          const matchStarted = new Date() >= new Date(m.match_date)
+          const finished = m.status === 'finished'
+          const showGuess = matchStarted // só mostra depois que começou
+
+          return (
+            <div key={m.id} style={{
+              position: 'relative', overflow: 'hidden',
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              borderRadius: '12px', marginBottom: '8px', padding: '10px 14px',
+            }}>
+              <CardBg name={m.home_team} side="left" />
+              <CardBg name={m.away_team} side="right" />
+              <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse 40% 80% at 50% 50%, rgba(6,11,20,0.7) 0%, transparent 100%)' }} />
+
+              <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {/* Times */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <TeamCircle name={m.home_team} size={20} />
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getPT(m.home_team)}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <TeamCircle name={m.away_team} size={20} />
+                    <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getPT(m.away_team)}</span>
+                  </div>
+                </div>
+
+                {/* Placar real */}
+                <div style={{ textAlign: 'center', flexShrink: 0 }}>
+                  {finished ? (
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: 'var(--text)' }}>{m.home_score} × {m.away_score}</span>
+                  ) : (
+                    <span style={{ fontSize: '10px', color: 'var(--gold)' }}>{format(new Date(m.match_date), 'HH:mm')}</span>
+                  )}
+                </div>
+
+                {/* Divider */}
+                <div style={{ width: '1px', height: '32px', background: 'var(--border)', flexShrink: 0 }} />
+
+                {/* Palpite adversário */}
+                <div style={{ textAlign: 'center', flexShrink: 0, minWidth: '60px' }}>
+                  {!showGuess ? (
+                    <span style={{ fontSize: '10px', color: 'var(--text-3)' }}>🔒 em breve</span>
+                  ) : !g ? (
+                    <span style={{ fontSize: '10px', color: 'var(--text-3)' }}>sem palpite</span>
+                  ) : (
+                    <>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: finished ? (g.points_earned > 0 ? 'var(--green)' : 'var(--red)') : '#c084fc' }}>
+                        {g.home_score} × {g.away_score}
+                      </div>
+                      {finished && g.points_earned > 0 && (
+                        <div style={{ fontSize: '10px', color: 'var(--green)', marginTop: '2px' }}>+{g.points_earned}pt</div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        })
+      )}
+    </div>
+  )
+}
+
+// ── Chaveamento ───────────────────────────────────────────────────────────────
+
+function BracketSlot({ p, seed, dim = false }) {
+  if (!p) return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.08)', opacity: 0.5 }}>
+      <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--surface)', flexShrink: 0 }} />
+      <span style={{ fontSize: '12px', color: 'var(--text-3)' }}>A definir</span>
+    </div>
+  )
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '8px', background: dim ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)', border: `1px solid ${dim ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.1)'}`, opacity: dim ? 0.5 : 1 }}>
+      <div style={{ width: 20, flexShrink: 0, textAlign: 'center', fontSize: '9px', color: 'var(--text-3)', fontFamily: 'var(--font-display)' }}>{seed}º</div>
+      <Avatar profile={p} size={24} />
+      <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {p.display_name || p.nick}
+      </span>
+    </div>
+  )
+}
+
+function MatchupCard({ m1, m2, seed1, seed2, myId }) {
+  const isMe = m1?.id === myId || m2?.id === myId
+  return (
+    <div style={{ background: 'var(--surface)', borderRadius: '10px', border: `1px solid ${isMe ? 'rgba(168,85,247,0.4)' : 'var(--border)'}`, overflow: 'hidden', marginBottom: '8px' }}>
+      <BracketSlot p={m1} seed={seed1} />
+      <div style={{ height: '1px', background: 'var(--border)' }} />
+      <BracketSlot p={m2} seed={seed2} />
+    </div>
+  )
+}
+
+function ChaveamentoTab({ bracket, loading, currentPhaseIdx, myId }) {
+  if (loading) return Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton" style={{ height: 80, marginBottom: 8, borderRadius: 10 }} />)
+
+  const phase = TOURNAMENT_PHASES[currentPhaseIdx]
+
+  return (
+    <div>
+      {/* Fase atual */}
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '4px' }}>
+        {TOURNAMENT_PHASES.map((ph, i) => (
+          <div key={ph.key} style={{
+            flexShrink: 0, padding: '6px 14px', borderRadius: '20px',
+            fontSize: '12px', fontWeight: 600,
+            background: i === currentPhaseIdx ? 'rgba(168,85,247,0.2)' : 'var(--surface)',
+            border: `1px solid ${i === currentPhaseIdx ? 'rgba(168,85,247,0.5)' : 'var(--border)'}`,
+            color: i === currentPhaseIdx ? '#c084fc' : i < currentPhaseIdx ? 'var(--text-2)' : 'var(--text-3)',
+          }}>
+            {i < currentPhaseIdx ? '✓ ' : ''}{ph.label}
+            {i === currentPhaseIdx && <span style={{ marginLeft: '6px', fontSize: '9px', background: 'rgba(168,85,247,0.3)', padding: '1px 5px', borderRadius: '10px' }}>AO VIVO</span>}
+          </div>
+        ))}
+      </div>
+
+      {/* Datas da fase atual */}
+      <div style={{ fontSize: '11px', color: 'var(--text-3)', marginBottom: '16px', padding: '8px 12px', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+        📅 <strong style={{ color: 'var(--text-2)' }}>{phase.label}:</strong> {new Date(phase.start + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} – {new Date(phase.end + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+        <span style={{ marginLeft: '10px' }}>· Avançar vale <strong style={{ color: '#c084fc' }}>+{phase.bonus}pts</strong></span>
+      </div>
+
+      {!bracket ? (
+        <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-3)' }}>
+          <div style={{ fontSize: '28px', marginBottom: '8px' }}>⏳</div>
+          <div>Chaveamento disponível quando os 16 participantes estiverem confirmados.</div>
+        </div>
+      ) : (
+        <>
+          {/* Chave A */}
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(168,85,247,0.7)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px' }}>⚔️ Chave A</div>
+            {bracket.chaveA.map((m, i) => {
+              const seeds = [i * 2 + 1, 16 - i * 2]
+              return <MatchupCard key={i} m1={m.p1} m2={m.p2} seed1={seeds[0]} seed2={seeds[1]} myId={myId} />
+            })}
+          </div>
+
+          {/* Chave B */}
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(168,85,247,0.7)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px' }}>⚔️ Chave B</div>
+            {bracket.chaveB.map((m, i) => {
+              const seeds = [i * 2 + 2, 15 - i * 2]
+              return <MatchupCard key={i} m1={m.p1} m2={m.p2} seed1={seeds[0]} seed2={seeds[1]} myId={myId} />
+            })}
+          </div>
+
+          {/* Legenda */}
+          <div style={{ marginTop: '16px', padding: '10px 14px', borderRadius: '8px', background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.15)', fontSize: '11px', color: 'var(--text-3)', lineHeight: 1.7 }}>
+            💡 Quem fizer <strong style={{ color: '#c084fc' }}>mais pontos no Nekomão</strong> dentro da janela da fase avança. Em caso de empate, valem os critérios de desempate do bolão (placares exatos → parciais → data de cadastro).
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ── Copa Yuuto Kidou Page ─────────────────────────────────────────────────────
+
+function CopaYuutoKidou({ user, matches }) {
+  const [subTab, setSubTab] = useState('chaveamento')
+  const [top16, setTop16] = useState(null)
+  const [myProfile, setMyProfile] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const currentPhaseIdx = getCurrentPhase()
+
+  useEffect(() => {
+    async function fetchRanking() {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, display_name, nick, avatar_url, points, exact_hits, partial_hits, qualifier_hits, created_at')
+        .order('points', { ascending: false })
+        .order('exact_hits', { ascending: false })
+        .order('partial_hits', { ascending: false })
+        .order('created_at', { ascending: true })
+
+      if (profiles) {
+        const t16 = profiles.slice(0, 16)
+        setTop16(t16)
+        setMyProfile(profiles.find(p => p.id === user.id) || null)
+      }
+      setLoading(false)
+    }
+    fetchRanking()
+  }, [user.id])
+
+  const bracket = top16 && top16.length >= 2 ? buildBracket(top16) : null
+
+  return (
+    <div>
+      {/* Sub-tabs */}
+      <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '16px' }}>
+        {[['chaveamento', '🏆 Chaveamento'], ['adversario', '⚔️ Adversário']].map(([key, label]) => (
+          <button key={key} onClick={() => setSubTab(key)} style={{
+            flex: 1, padding: '9px 8px', border: 'none', cursor: 'pointer',
+            fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600,
+            background: 'transparent',
+            color: subTab === key ? 'var(--text)' : 'var(--text-3)',
+            borderBottom: `2px solid ${subTab === key ? '#c084fc' : 'transparent'}`,
+            transition: 'all 0.2s',
+          }}>{label}</button>
+        ))}
+      </div>
+
+      {subTab === 'chaveamento'
+        ? <ChaveamentoTab bracket={bracket} loading={loading} currentPhaseIdx={currentPhaseIdx} myId={user.id} />
+        : <AdversarioTab myProfile={myProfile} bracket={bracket} matches={matches} currentPhaseIdx={currentPhaseIdx} />
+      }
+    </div>
+  )
+}
+
+// ── GuessesPage (principal) ────────────────────────────────────────────────────
 
 export default function GuessesPage() {
   const { user } = useAuth()
@@ -775,30 +1142,38 @@ export default function GuessesPage() {
     grouped[d].push(m)
   })
 
+  // Título dinâmico por aba
+  const pageTitle = tab === 'palpites' ? 'Nekomão' : 'Copa Yuuto Kidou'
+
+  const tabs = ['palpites', 'copa']
+
   return (
     <div className="page">
-      <div className="section-title">{tab === 'regras' ? 'Regras' : 'Palpites'}</div>
+      <div className="section-title">{pageTitle}</div>
 
       <QuizBanner />
 
-      <div style={{ display: 'flex', background: 'var(--surface)', borderRadius: 'var(--r-md)', padding: '4px', marginBottom: '16px', gap: '4px' }}
+      {/* Toggle principal */}
+      <div
+        style={{ display: 'flex', background: 'var(--surface)', borderRadius: 'var(--r-md)', padding: '4px', marginBottom: '16px', gap: '4px' }}
         onTouchStart={e => { e.currentTarget._sx = e.touches[0].clientX }}
         onTouchEnd={e => {
           const dx = e.changedTouches[0].clientX - (e.currentTarget._sx || 0)
-          const tabs = ['palpites','regras']
           const cur = tabs.indexOf(tab)
           if (dx < -40 && cur < tabs.length - 1) setTab(tabs[cur + 1])
           if (dx > 40 && cur > 0) setTab(tabs[cur - 1])
         }}
       >
-        {[['palpites', '⚽ Palpites'], ['regras', '{em produção}']].map(([key, label]) => (
-          <button key={key} onClick={() => setTab(key)} style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600, transition: 'all 0.2s', background: tab === key ? 'rgba(255,255,255,0.1)' : 'transparent', color: tab === key ? 'var(--text)' : 'var(--text-3)' }}>
+        {[['palpites', '⚽ Nekomão (Liga)'], ['copa', '🏆 Copa Yuuto Kidou']].map(([key, label]) => (
+          <button key={key} onClick={() => setTab(key)} style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '12px', fontWeight: 600, transition: 'all 0.2s', background: tab === key ? 'rgba(255,255,255,0.1)' : 'transparent', color: tab === key ? 'var(--text)' : 'var(--text-3)' }}>
             {label}
           </button>
         ))}
       </div>
 
-      {tab === 'regras' ? null : (
+      {tab === 'copa' ? (
+        <CopaYuutoKidou user={user} matches={matches} />
+      ) : (
         <>
           <MasterGuess userId={user.id} />
 
@@ -832,14 +1207,7 @@ export default function GuessesPage() {
                     <div key={date}>
                       <div
                         onClick={isTodos ? () => setExpandedDays(prev => ({ ...prev, [date]: !isExpanded })) : undefined}
-                        style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          fontSize: '11px', fontWeight: 700, color: 'var(--gold)',
-                          textTransform: 'capitalize', letterSpacing: '0.08em',
-                          marginBottom: '8px', marginTop: '16px',
-                          cursor: isTodos ? 'pointer' : 'default', userSelect: 'none',
-                          padding: '4px 0',
-                        }}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, color: 'var(--gold)', textTransform: 'capitalize', letterSpacing: '0.08em', marginBottom: '8px', marginTop: '16px', cursor: isTodos ? 'pointer' : 'default', userSelect: 'none', padding: '4px 0' }}
                       >
                         <span>{date}</span>
                         {isTodos && (
