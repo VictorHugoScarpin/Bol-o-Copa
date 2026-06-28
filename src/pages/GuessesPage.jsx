@@ -365,6 +365,7 @@ function GuessCard({ match, myGuess, onSave }) {
                     : partialCorrect
                       ? <span className="badge badge-gold">✓ +1pt</span>
                       : <span className="badge badge-red">✗ Erro</span>
+              : live ? <span className="badge badge-muted" style={{ fontSize: '9px' }}>🔒</span>
               : myGuess?.home_score !== undefined ? <span className="badge badge-gold">✓ {myGuess.home_score}×{myGuess.away_score}</span>
               : <span className="badge badge-muted" style={{ fontSize: '9px' }}>sem palpite</span>
             }
