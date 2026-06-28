@@ -21,6 +21,8 @@ function Avatar({ profile, size = 36 }) {
 
 // ── Lista de jogos em que o usuário pontuou ─────────────────────────────────
 
+const KNOCKOUT_START_R = new Date('2026-06-28T00:00:00')
+
 function ScoredGuesses({ userId }) {
   const [items, setItems] = useState(null)
 
@@ -28,7 +30,7 @@ function ScoredGuesses({ userId }) {
     let active = true
     supabase
       .from('guesses')
-      .select('home_score, away_score, matches(home_team, away_team, home_score, away_score, status, match_date)')
+      .select('home_score, away_score, qualifier_guess, matches(home_team, away_team, home_score, away_score, status, match_date, qualifier_result)')
       .eq('user_id', userId)
       .then(({ data }) => {
         if (!active) return
@@ -69,8 +71,14 @@ function ScoredGuesses({ userId }) {
         const m = g.matches
         const result = getGuessResult(g, m.home_score, m.away_score)
         const isExact = result === 'exact'
-        const color = isExact ? 'var(--green)' : 'var(--gold)'
-        const bg = isExact ? 'var(--green-dim)' : 'rgba(232,184,75,0.08)'
+        const isKo = new Date(m.match_date) >= KNOCKOUT_START_R
+        const qualifierHit = isKo && g.qualifier_guess && m.qualifier_result && g.qualifier_guess === m.qualifier_result
+        const blueCombo = qualifierHit && (isExact || result === 'partial')
+        const basePoints = isExact ? 3 : 1
+        const totalPoints = basePoints + (qualifierHit ? 2 : 0)
+
+        const color = blueCombo ? '#60a5fa' : isExact ? 'var(--green)' : 'var(--gold)'
+        const bg = blueCombo ? 'rgba(59,130,246,0.1)' : isExact ? 'var(--green-dim)' : 'rgba(232,184,75,0.08)'
         return (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 10px', borderRadius: '8px', background: bg }}>
             <FlagCircle name={m.home_team} size={22} />
@@ -82,8 +90,8 @@ function ScoredGuesses({ userId }) {
             <span style={{ fontFamily: 'var(--font-display)', fontSize: '15px', color, letterSpacing: '0.04em', flexShrink: 0 }}>
               {g.home_score} × {g.away_score}
             </span>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: '12px', fontWeight: 700, color, flexShrink: 0, minWidth: '22px', textAlign: 'right' }}>
-              +{isExact ? 3 : 1}
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: '12px', fontWeight: 700, color, flexShrink: 0, minWidth: '26px', textAlign: 'right' }}>
+              +{totalPoints}
             </span>
           </div>
         )
@@ -185,8 +193,8 @@ function RankingTab({ ranking, loading, user }) {
 
 // ── Aba CLASSIFICAÇÃO (tabela detalhada) ────────────────────────────────────
 
-const COL = '38px'
-const COLS = `28px 1fr ${COL} ${COL} ${COL} ${COL}`
+const COL = '34px'
+const COLS = `28px 1fr ${COL} ${COL} ${COL} ${COL} ${COL}`
 const hStyle = { fontSize: '10px', fontWeight: 700, color: 'var(--text-3)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.08em' }
 
 function HeaderRow() {
@@ -197,6 +205,7 @@ function HeaderRow() {
       <div style={hStyle}>PT</div>
       <div style={hStyle}>PE</div>
       <div style={hStyle}>PR</div>
+      <div style={{ ...hStyle, color: '#60a5fa' }}>CC</div>
       <div style={hStyle}>J</div>
     </div>
   )
@@ -231,6 +240,7 @@ function PlayerRow({ profile, position, isMe, totalGuesses }) {
       </div>
       <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-2)', fontWeight: 500 }}>{profile.exact_hits ?? 0}</div>
       <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-2)', fontWeight: 500 }}>{profile.partial_hits ?? 0}</div>
+      <div style={{ textAlign: 'center', fontSize: '13px', color: '#60a5fa', fontWeight: 600 }}>{profile.qualifier_hits ?? 0}</div>
       <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-3)' }}>{totalGuesses ?? 0}</div>
     </div>
   )
@@ -246,10 +256,11 @@ function ClassificacaoTab({ ranking, loading, user, guessCounts }) {
           { sig: 'PT', desc: 'Pontos totais' },
           { sig: 'PE', desc: 'Placar exato' },
           { sig: 'PR', desc: 'Resultado certo' },
+          { sig: 'CC', desc: 'Classificação certa', blue: true },
           { sig: 'J',  desc: 'Jogos palpitados' },
-        ].map(({ sig, desc }) => (
+        ].map(({ sig, desc, blue }) => (
           <div key={sig} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--gold)', fontFamily: 'var(--font-display)', letterSpacing: '0.06em' }}>{sig}</span>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: blue ? '#60a5fa' : 'var(--gold)', fontFamily: 'var(--font-display)', letterSpacing: '0.06em' }}>{sig}</span>
             <span style={{ fontSize: '11px', color: 'var(--text-3)' }}>{desc}</span>
           </div>
         ))}
@@ -297,7 +308,7 @@ export default function RankingPage() {
       const [{ data: profiles }, { data: guesses }] = await Promise.all([
         supabase
           .from('profiles')
-          .select('id, display_name, nick, avatar_url, points, exact_hits, partial_hits, created_at')
+          .select('id, display_name, nick, avatar_url, points, exact_hits, partial_hits, qualifier_hits, created_at')
           .order('points', { ascending: false })
           .order('exact_hits', { ascending: false })
           .order('partial_hits', { ascending: false })
