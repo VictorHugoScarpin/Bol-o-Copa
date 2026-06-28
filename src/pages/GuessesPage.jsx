@@ -738,7 +738,7 @@ function useOpponentGuesses(opponentId, phase, matches) {
 
     const phaseMatchIds = matches
       .filter(m => {
-        const d = new Date(m.match_date)
+        const d = new Date(String(m.match_date).replace(' ', 'T'))
         return d >= start && d <= end
       })
       .map(m => m.id)
@@ -800,7 +800,7 @@ function AdversarioTab({ myProfile, bracket, matches, currentPhaseIdx }) {
       const pts = (data || []).filter(g => {
         const md = g.matches?.match_date
         if (!md) return false
-        const d = new Date(md)
+        const d = new Date(String(md).replace(' ', 'T'))
         return d >= start && d <= end && g.matches?.status === 'finished'
       }).reduce((s, g) => s + (g.points_earned || 0), 0)
       setter(pts)
@@ -815,7 +815,7 @@ function AdversarioTab({ myProfile, bracket, matches, currentPhaseIdx }) {
     const start = new Date(phase.start + 'T00:00:00')
     const end = new Date(phase.end + 'T23:59:59')
     return matches.filter(m => {
-      const d = new Date(m.match_date)
+      const d = new Date(String(m.match_date).replace(' ', 'T'))
       return d >= start && d <= end
     }).sort((a, b) => new Date(a.match_date) - new Date(b.match_date))
   }, [matches, phase])
