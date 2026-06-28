@@ -1148,7 +1148,7 @@ function CopaYuutoKidou({ user, matches }) {
     <div>
       {/* Sub-tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '16px' }}>
-        {[['chaveamento', 'Chaveamento'], ['adversario', '⚔️ Adversário']].map(([key, label]) => (
+        {[['chaveamento', 'Chaveamento'], ['adversario', 'Adversário']].map(([key, label]) => (
           <button key={key} onClick={() => setSubTab(key)} style={{
             flex: 1, padding: '9px 8px', border: 'none', cursor: 'pointer',
             fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600,
@@ -1237,7 +1237,7 @@ export default function GuessesPage() {
           if (dx > 40 && cur > 0) setTab(tabs[cur - 1])
         }}
       >
-        {[['palpites', 'Liga Nekomão'], ['copa', '🎌 Copa Yuuto Kidou']].map(([key, label]) => (
+        {[['palpites', '⚽ Liga Nekomão'], ['copa', '🎌 Copa Yuuto Kidou']].map(([key, label]) => (
           <button key={key} onClick={() => setTab(key)} style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '12px', fontWeight: 600, transition: 'all 0.2s', background: tab === key ? 'rgba(255,255,255,0.1)' : 'transparent', color: tab === key ? 'var(--text)' : 'var(--text-3)' }}>
             {label}
           </button>
