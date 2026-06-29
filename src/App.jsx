@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './hooks/useAuth'
+import { useEffect, useRef, useState } from 'react'
 import LoginPage from './pages/LoginPage'
 import MatchesPage from './pages/MatchesPage'
 import GuessesPage from './pages/GuessesPage'
@@ -55,6 +56,25 @@ function BottomNav() {
 
 function AppRoutes() {
   const { user, loading } = useAuth()
+  const { pathname } = useLocation()
+  const mainRef = useRef(null)
+  const [showScrollTop, setShowScrollTop] = useState(false)
+  const [dayTab, setDayTab] = useState('hoje')
+
+  useEffect(() => {
+    const handler = (e) => setDayTab(e.detail)
+    window.addEventListener('daytab-change', handler)
+    return () => window.removeEventListener('daytab-change', handler)
+  }, [])
+
+  useEffect(() => {
+    const el = mainRef.current
+    if (!el) return
+    const handleScroll = () => setShowScrollTop(el.scrollTop > 100)
+    el.addEventListener('scroll', handleScroll)
+    return () => el.removeEventListener('scroll', handleScroll)
+  }, [user])
+
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ fontFamily: 'var(--font-display)', fontSize: '32px', letterSpacing: '0.1em', color: 'var(--gold)', animation: 'pulse 1.5s infinite' }}>BOLÃO ⚽</div>
@@ -66,7 +86,7 @@ function AppRoutes() {
       <TopHeader />
       <SideNav />
       <QuizInviteModal userId={user.id} />
-      <main style={{ overflowY: 'auto' }}>
+      <main ref={mainRef} style={{ overflowY: 'auto' }}>
         <Routes>
           <Route path="/"          element={<MatchesPage />} />
           <Route path="/palpites"  element={<GuessesPage />} />
@@ -82,6 +102,19 @@ function AppRoutes() {
         </Routes>
       </main>
       <BottomNav />
+      {pathname === '/palpites' && dayTab === 'todos' && showScrollTop && (
+        <button
+          onClick={() => mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+          style={{
+            position: 'fixed', bottom: '80px', right: '20px', zIndex: 200,
+            width: '40px', height: '40px', borderRadius: '50%',
+            background: 'var(--surface)', border: '1px solid var(--border-strong)',
+            color: 'var(--text-2)', fontSize: '16px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+          }}
+        >↑</button>
+      )}
     </div>
   )
 }
