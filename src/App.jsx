@@ -102,7 +102,10 @@ function AppRoutes() {
       <BottomNav />
       {pathname === '/palpites' && dayTab === 'todos' && showScrollTop && (
         <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          onClick={() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+            window.dispatchEvent(new CustomEvent('reset-expanded'))
+          }}
           style={{
             position: 'fixed', bottom: '80px', right: '20px', zIndex: 200,
             width: '40px', height: '40px', borderRadius: '50%',
