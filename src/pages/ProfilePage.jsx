@@ -9,7 +9,7 @@ function RegrasLiga() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       <div className="glass-card" style={{ padding: '16px 20px' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: 'var(--gold)', marginBottom: '14px', letterSpacing: '0.06em' }}>
-          ⚽ FASE DE GRUPOS
+          FASE DE GRUPOS
         </div>
         {[
           { icon: '🎯', label: 'Placar Exato',   desc: 'Acertou o placar certinho (ex: 2×1 = 2×1)', pts: '+3', color: 'var(--green)' },
@@ -30,7 +30,7 @@ function RegrasLiga() {
 
       <div className="glass-card" style={{ padding: '16px 20px' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: 'var(--gold)', marginBottom: '6px', letterSpacing: '0.06em' }}>
-          🔥 MATA-MATA
+          MATA-MATA
         </div>
         <div style={{ fontSize: '11px', color: 'var(--text-3)', marginBottom: '14px', lineHeight: 1.6 }}>
           A partir de <strong style={{ color: 'var(--text-2)' }}>28 de junho</strong>, além do palpite de placar você também escolhe <strong style={{ color: 'var(--text-2)' }}>quem se classifica</strong> — e isso vale pontos extras!
@@ -59,7 +59,7 @@ function RegrasLiga() {
 
       <div className="glass-card" style={{ padding: '16px 20px' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: 'var(--gold)', marginBottom: '14px', letterSpacing: '0.06em' }}>
-          🌟 PALPITE MESTRE
+          PALPITE MESTRE
         </div>
         <div style={{ fontSize: '11px', color: 'var(--text-3)', marginBottom: '14px', lineHeight: 1.6 }}>
           Antes da Copa começar, palpite os <strong style={{ color: 'var(--text-2)' }}>dois finalistas</strong>. Vale bônus especial!
@@ -79,7 +79,7 @@ function RegrasLiga() {
 
       <div className="glass-card" style={{ padding: '16px 20px' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: 'var(--gold)', marginBottom: '14px', letterSpacing: '0.06em' }}>
-          🔢 DESEMPATE DA LIGA
+          DESEMPATE DA LIGA
         </div>
         {[
           { icon: '⭐', label: 'Pontos totais',       desc: 'Maior pontuação total na liga' },
@@ -107,7 +107,7 @@ function RegrasTorneio() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       <div className="glass-card" style={{ padding: '16px 20px' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: '#c084fc', marginBottom: '10px', letterSpacing: '0.06em' }}>
-          🏆 COPA YUUTO KIDOU
+          COPA YUUTO KIDOU
         </div>
         <div style={{ fontSize: '12px', color: 'var(--text-2)', lineHeight: 1.8 }}>
           Um torneio paralelo à liga! Os <strong style={{ color: 'var(--text)' }}>16 melhores</strong> do ranking Nekomão entram no chaveamento. A cada fase, quem fizer mais pontos nos jogos reais da Copa avança — e acumula bônus!
@@ -116,16 +116,16 @@ function RegrasTorneio() {
 
       <div className="glass-card" style={{ padding: '16px 20px' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: '#c084fc', marginBottom: '14px', letterSpacing: '0.06em' }}>
-          🎯 CHAVEAMENTO
+          CHAVEAMENTO
         </div>
         {[
-          { icon: '1️⃣', label: 'Oitavas de Final',  desc: '1º vs 16º, 2º vs 15º... pelo ranking da liga', date: '28/06 – 03/07' },
-          { icon: '2️⃣', label: 'Quartas de Final',  desc: 'Vencedor do confronto 1 vs 2, 3 vs 4...',       date: '04/07 – 07/07' },
-          { icon: '3️⃣', label: 'Semifinal',          desc: 'Vencedor do confronto 1 vs 2 da chave',         date: '09/07 – 11/07' },
-          { icon: '4️⃣', label: 'Final',              desc: 'Os dois semifinalistas se enfrentam',            date: '14/07 – 15/07' },
+          { label: 'Oitavas de Final',  desc: '1º vs 16º, 2º vs 15º... pelo ranking da liga', date: '28/06 – 03/07' },
+          { label: 'Quartas de Final',  desc: 'Vencedor do confronto 1 vs 2, 3 vs 4...',       date: '04/07 – 07/07' },
+          { label: 'Semifinal',          desc: 'Vencedor do confronto 1 vs 2 da chave',         date: '09/07 – 11/07' },
+          { label: 'Final',              desc: 'Os dois semifinalistas se enfrentam',            date: '14/07 – 15/07' },
         ].map((item, i, arr) => (
           <div key={item.label} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
-            <span style={{ fontSize: '18px', flexShrink: 0, marginTop: 1 }}>{item.icon}</span>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '14px', color: '#c084fc', flexShrink: 0, marginTop: 2, minWidth: 18 }}>{i + 1}.</div>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>{item.label}</div>
@@ -139,7 +139,7 @@ function RegrasTorneio() {
 
       <div className="glass-card" style={{ padding: '16px 20px' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: '#c084fc', marginBottom: '14px', letterSpacing: '0.06em' }}>
-          🎁 BÔNUS POR FASE
+          BÔNUS POR FASE
         </div>
         <div style={{ fontSize: '11px', color: 'var(--text-3)', marginBottom: '14px', lineHeight: 1.6 }}>
           Quem avança de fase recebe pontos bônus no <strong style={{ color: 'var(--text-2)' }}>Ranking Supercopa</strong>. Os bônus acumulam!
@@ -168,7 +168,7 @@ function RegrasTorneio() {
 
       <div className="glass-card" style={{ padding: '16px 20px' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: '#c084fc', marginBottom: '14px', letterSpacing: '0.06em' }}>
-          🔢 DESEMPATE NO TORNEIO
+          DESEMPATE NO TORNEIO
         </div>
         <div style={{ fontSize: '11px', color: 'var(--text-3)', marginBottom: '12px', lineHeight: 1.6 }}>
           Se dois jogadores ficarem empatados em pontos na janela da fase:
@@ -198,26 +198,23 @@ function RegrasRanking() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       <div className="glass-card" style={{ padding: '16px 20px' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: 'var(--gold)', marginBottom: '14px', letterSpacing: '0.06em' }}>
-          📊 OS TRÊS RANKINGS
+          OS TRÊS RANKINGS
         </div>
         {[
-          { icon: '🏆', label: 'Ranking Supercopa', color: 'var(--gold)', desc: 'A classificação geral. Soma todos os pontos da liga + bônus do torneio. É o ranking principal da Copa Nekoma.' },
-          { icon: '⚽', label: 'Classificação Nekomão', color: 'var(--gold)', desc: 'Só conta os pontos da liga (palpites dos jogos). Sem bônus do torneio. Define quem entra no chaveamento.' },
-          { icon: '🎌', label: 'Pontos Yuuto Kidou', color: '#c084fc', desc: 'Ranking exclusivo do torneio. Mostra os bônus acumulados por fase. Aparece em roxo no app.' },
+          { label: 'Ranking Supercopa', color: 'var(--gold)', desc: 'A classificação geral. Soma todos os pontos da liga + bônus do torneio. É o ranking principal da Copa Nekoma.' },
+          { label: 'Classificação Nekomão', color: 'var(--gold)', desc: 'Só conta os pontos da liga (palpites dos jogos). Sem bônus do torneio. Define quem entra no chaveamento.' },
+          { label: 'Pontos Yuuto Kidou', color: '#c084fc', desc: 'Ranking exclusivo do torneio. Mostra os bônus acumulados por fase. Aparece em roxo no app.' },
         ].map((item, i, arr) => (
           <div key={item.label} style={{ padding: '12px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-              <span style={{ fontSize: '20px' }}>{item.icon}</span>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: item.color }}>{item.label}</div>
-            </div>
-            <div style={{ fontSize: '11px', color: 'var(--text-3)', lineHeight: 1.7, paddingLeft: '30px' }}>{item.desc}</div>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: item.color, marginBottom: '6px' }}>{item.label}</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-3)', lineHeight: 1.7 }}>{item.desc}</div>
           </div>
         ))}
       </div>
 
       <div className="glass-card" style={{ padding: '16px 20px' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: 'var(--gold)', marginBottom: '14px', letterSpacing: '0.06em' }}>
-          ➕ COMO OS PONTOS SOMAM
+          COMO OS PONTOS SOMAM
         </div>
         <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '14px', marginBottom: '14px' }}>
           <div style={{ fontSize: '11px', color: 'var(--text-3)', marginBottom: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Exemplo</div>
@@ -228,7 +225,7 @@ function RegrasRanking() {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '12px', color: 'var(--text-2)' }}>Chegou na Semi (+3+4+5)</span>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '18px', color: '#c084fc' }}>+12pt 🏆</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: '18px', color: '#c084fc' }}>+12pt</span>
             </div>
             <div style={{ height: '1px', background: 'var(--border)' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -238,13 +235,13 @@ function RegrasRanking() {
           </div>
         </div>
         <div style={{ fontSize: '11px', color: 'var(--text-3)', lineHeight: 1.8 }}>
-          Os pontos do torneio aparecem em <strong style={{ color: '#c084fc' }}>roxo</strong> com o símbolo 🏆 sempre que aparecerem no app.
+          O <strong style={{ color: 'var(--text-2)' }}>Ranking Supercopa</strong> é a soma dos pontos da liga (Nekomão) com os bônus acumulados no torneio (Yuuto Kidou). Os pontos de torneio aparecem em <strong style={{ color: '#c084fc' }}>roxo</strong> sempre que exibidos no app.
         </div>
       </div>
 
       <div className="glass-card" style={{ padding: '16px 20px' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: 'var(--gold)', marginBottom: '14px', letterSpacing: '0.06em' }}>
-          🔢 DESEMPATE GERAL (SUPERCOPA)
+          DESEMPATE GERAL (SUPERCOPA)
         </div>
         {[
           { icon: '⭐', label: 'Pontos totais (liga + torneio)', desc: 'Quem tem mais pontos na Supercopa' },
@@ -270,22 +267,24 @@ function RegrasRanking() {
 function RegrasSection() {
   const [sub, setSub] = useState('liga')
   const subTabs = [
-    { key: 'liga',    label: 'Nekomao ⚽' },
-    { key: 'torneio', label: 'Yuuto Kidou 🎌' },
-    { key: 'ranking', label: 'Supercopa 🏆' },
+    { key: 'liga',    label: 'Nekomão' },
+    { key: 'torneio', label: 'Yuuto Kidou' },
+    { key: 'ranking', label: 'Supercopa' },
   ]
   return (
     <div style={{ marginBottom: '24px' }}>
-      <div style={{ display: 'flex', background: 'var(--surface)', borderRadius: 'var(--r-md)', padding: '4px', marginBottom: '16px', gap: '4px' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '16px' }}>
         {subTabs.map(({ key, label }) => (
           <button
             key={key}
             onClick={() => setSub(key)}
             style={{
-              flex: 1, padding: '9px 4px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+              flex: 1, padding: '10px 4px', border: 'none', cursor: 'pointer',
               fontFamily: 'var(--font-body)', fontSize: '12px', fontWeight: 600, transition: 'all 0.2s',
-              background: sub === key ? (key === 'torneio' ? 'rgba(168,85,247,0.2)' : 'rgba(255,255,255,0.1)') : 'transparent',
+              background: 'transparent',
               color: sub === key ? (key === 'torneio' ? '#c084fc' : 'var(--text)') : 'var(--text-3)',
+              borderBottom: `2px solid ${sub === key ? (key === 'torneio' ? '#c084fc' : 'var(--gold)') : 'transparent'}`,
+              letterSpacing: '0.02em',
             }}
           >
             {label}
@@ -341,16 +340,15 @@ function PositionCards({ userId }) {
   if (!positions) return null
 
   const cards = [
-    { label: 'Supercopa', icon: '🏆', color: 'var(--gold)',  bg: 'rgba(232,184,75,0.08)',  border: 'rgba(232,184,75,0.2)',  ...positions.supercopa },
-    { label: 'Nekomão',   icon: '⚽', color: 'var(--green)', bg: 'rgba(55,200,100,0.08)',  border: 'rgba(55,200,100,0.2)', ...positions.liga },
-    { label: 'Yuuto Kidou', icon: '🎌', color: '#c084fc',    bg: 'rgba(168,85,247,0.08)', border: 'rgba(168,85,247,0.2)', ...positions.torneio },
+    { label: 'Supercopa', icon: null, color: 'var(--gold)',  bg: 'rgba(232,184,75,0.08)',  border: 'rgba(232,184,75,0.2)',  ...positions.supercopa },
+    { label: 'Nekomão',   icon: null, color: 'var(--green)', bg: 'rgba(55,200,100,0.08)',  border: 'rgba(55,200,100,0.2)', ...positions.liga },
+    { label: 'Yuuto Kidou', icon: null, color: '#c084fc',    bg: 'rgba(168,85,247,0.08)', border: 'rgba(168,85,247,0.2)', ...positions.torneio },
   ]
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '12px' }}>
       {cards.map(({ label, icon, color, bg, border, pos, pts, total }) => (
         <div key={label} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 'var(--r-md)', padding: '12px 8px', textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', marginBottom: '4px' }}>{icon}</div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: '26px', color, lineHeight: 1 }}>{pos}º</div>
           <div style={{ fontSize: '10px', color: 'var(--text-3)', marginTop: '2px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
           <div style={{ fontSize: '11px', color, marginTop: '4px', fontWeight: 700 }}>{pts}pt</div>
@@ -435,12 +433,11 @@ function PlayerProfileView({ player, onBack }) {
         {positions && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
             {[
-              { label: 'Supercopa', icon: '🏆', color: 'var(--gold)',  bg: 'rgba(232,184,75,0.08)',  border: 'rgba(232,184,75,0.2)',  pos: positions.supercopa, pts: (player.points ?? 0) + (player.tournament_points ?? 0) },
-              { label: 'Nekomão',   icon: '⚽', color: 'var(--green)', bg: 'rgba(55,200,100,0.08)', border: 'rgba(55,200,100,0.2)', pos: positions.liga,      pts: player.points ?? 0 },
-              { label: 'Yuuto Kidou', icon: '🎌', color: '#c084fc',   bg: 'rgba(168,85,247,0.08)', border: 'rgba(168,85,247,0.2)', pos: positions.torneio,   pts: player.tournament_points ?? 0 },
+              { label: 'Supercopa', icon: null, color: 'var(--gold)',  bg: 'rgba(232,184,75,0.08)',  border: 'rgba(232,184,75,0.2)',  pos: positions.supercopa, pts: (player.points ?? 0) + (player.tournament_points ?? 0) },
+              { label: 'Nekomão',   icon: null, color: 'var(--green)', bg: 'rgba(55,200,100,0.08)', border: 'rgba(55,200,100,0.2)', pos: positions.liga,      pts: player.points ?? 0 },
+              { label: 'Yuuto Kidou', icon: null, color: '#c084fc',   bg: 'rgba(168,85,247,0.08)', border: 'rgba(168,85,247,0.2)', pos: positions.torneio,   pts: player.tournament_points ?? 0 },
             ].map(({ label, icon, color, bg, border, pos, pts }) => (
               <div key={label} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 'var(--r-md)', padding: '12px 8px', textAlign: 'center' }}>
-                <div style={{ fontSize: '16px', marginBottom: '3px' }}>{icon}</div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: '22px', color, lineHeight: 1 }}>{pos}º</div>
                 <div style={{ fontSize: '9px', color: 'var(--text-3)', marginTop: '2px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
                 <div style={{ fontSize: '10px', color, marginTop: '3px', fontWeight: 700 }}>{pts}pt</div>
