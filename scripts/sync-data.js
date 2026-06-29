@@ -501,6 +501,9 @@ async function syncMatches() {
   for (const m of (existingMatches || [])) {
     existingStatusMap[m.external_id] = m.status
     existingQualifierMap[m.external_id] = m.qualifier_result
+    if (match.score?.penalties?.home != null) {
+  console.log(`🔍 PEN [${match.homeTeam.name} x ${match.awayTeam.name}]`, JSON.stringify(match.score, null, 2))
+
   }
 
   let salvos = 0, pulados = 0, erros = 0
