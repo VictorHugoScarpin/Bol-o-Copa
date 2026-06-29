@@ -1470,20 +1470,21 @@ export default function GuessesPage() {
                 </>
           }
 
-          {dayTab === 'todos' && showScrollTop && (
-            <button
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              style={{
-                position: 'fixed', bottom: '80px', right: '20px', zIndex: 50,
-                width: '40px', height: '40px', borderRadius: '50%',
-                background: 'var(--surface)', border: '1px solid var(--border-strong)',
-                color: 'var(--text-2)', fontSize: '16px', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
-              }}
-            >↑</button>
-          )}
         </>
+      )}
+
+      {tab === 'palpites' && dayTab === 'todos' && showScrollTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          style={{
+            position: 'fixed', bottom: '80px', right: '20px', zIndex: 50,
+            width: '40px', height: '40px', borderRadius: '50%',
+            background: 'var(--surface)', border: '1px solid var(--border-strong)',
+            color: 'var(--text-2)', fontSize: '16px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+          }}
+        >↑</button>
       )}
     </div>
   )
