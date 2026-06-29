@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { format, differenceInSeconds, parseISO, startOfDay } from 'date-fns'
@@ -1314,27 +1314,6 @@ export default function GuessesPage() {
   const [tab, setTab] = useState('palpites')
   const [dayTab, setDayTab] = useState('hoje')
   const [expandedDays, setExpandedDays] = useState({})
-  const [showScrollTop, setShowScrollTop] = useState(false)
-  const pageRef = useRef(null)
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const el = pageRef.current
-      if (el) {
-        setShowScrollTop(el.scrollTop > 100)
-      } else {
-        setShowScrollTop(window.scrollY > 100)
-      }
-    }
-    const el = pageRef.current
-    if (el) {
-      el.addEventListener('scroll', handleScroll)
-      return () => el.removeEventListener('scroll', handleScroll)
-    } else {
-      window.addEventListener('scroll', handleScroll)
-      return () => window.removeEventListener('scroll', handleScroll)
-    }
-  }, [])
 
   const fetchData = useCallback(async () => {
     const [{ data: mData }, { data: myData }] = await Promise.all([
@@ -1403,7 +1382,7 @@ export default function GuessesPage() {
   const tabs = ['palpites', 'copa']
 
   return (
-    <div className="page" ref={pageRef}>
+    <div className="page">
       <div className="section-title">{pageTitle}</div>
 
       <QuizBanner />
@@ -1487,12 +1466,9 @@ export default function GuessesPage() {
         </>
       )}
 
-      {tab === 'palpites' && dayTab === 'todos' && showScrollTop && (
+      {tab === 'palpites' && dayTab === 'todos' && (
         <button
-          onClick={() => {
-            if (pageRef.current) pageRef.current.scrollTo({ top: 0, behavior: 'smooth' })
-            else window.scrollTo({ top: 0, behavior: 'smooth' })
-          }}
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           style={{
             position: 'fixed', bottom: '80px', right: '20px', zIndex: 50,
             width: '40px', height: '40px', borderRadius: '50%',
