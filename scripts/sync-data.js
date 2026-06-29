@@ -513,15 +513,24 @@ async function syncMatches() {
     const statusAntes = existingStatusMap[externalId] // status que estava no banco
     const qualifierAntes = existingQualifierMap[externalId] // qualifier_result que estava no banco
 
+    // A API retorna:
+    // regularTime = placar após 90min (o que queremos mostrar)
+    // extraTime   = gols SÓ na prorrogação
+    // penalties   = gols SÓ nos pênaltis (não é acumulado)
+    // fullTime    = placar acumulado total (90+ET+pen) — NÃO usar para exibição
+    const rtHome = match.score?.regularTime?.home
+    const rtAway = match.score?.regularTime?.away
     const ftHome = match.score?.fullTime?.home
     const ftAway = match.score?.fullTime?.away
-    const etHome = match.score?.extraTime?.home
-    const etAway = match.score?.extraTime?.away
-    const penHome = match.score?.penalties?.home
-    const penAway = match.score?.penalties?.away
+    const penHome = match.score?.penalties?.home ?? null
+    const penAway = match.score?.penalties?.away ?? null
 
-    const finalHome = (etHome != null) ? etHome : ftHome
-    const finalAway = (etAway != null) ? etAway : ftAway
+    const etHome = match.score?.extraTime?.home ?? null
+    const etAway = match.score?.extraTime?.away ?? null
+
+    // Placar exibido = regularTime + extraTime (se houver ET), senão só regularTime, senão fullTime
+    const finalHome = rtHome != null ? rtHome + (etHome ?? 0) : ftHome
+    const finalAway = rtAway != null ? rtAway + (etAway ?? 0) : ftAway
 
     let qualifierResult = null
     if (status === 'finished' && new Date(match.utcDate) >= KNOCKOUT_START) {
