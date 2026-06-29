@@ -34,7 +34,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <img
-            src="/login1.png"
+            src="/login2.png"
             alt="Nekoma"
             style={{ height: '255px', marginBottom: '22px', filter: 'drop-shadow(0 0 12px rgba(232,184,75,0.35)) drop-shadow(0 0 28px rgba(232,184,75,0.15))' }}
             onError={e => { e.target.style.display = 'none' }}
