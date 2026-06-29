@@ -58,7 +58,7 @@ export default function LoginPage() {
           <img
             src="/login.png"
             alt="Nekoma"
-            style={{ height: '140px', marginBottom: '22px', filter: 'drop-shadow(0 0 28px rgba(232,184,75,0.60)) drop-shadow(0 0 56px rgba(232,184,75,0.30))' }}
+            style={{ height: '190px', marginBottom: '22px', filter: 'drop-shadow(0 0 28px rgba(232,184,75,0.60)) drop-shadow(0 0 56px rgba(232,184,75,0.30))' }}
             onError={e => { e.target.style.display = 'none' }}
           />
         </div>
