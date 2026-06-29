@@ -190,7 +190,7 @@ export default function ChatPage() {
         borderRadius: 'var(--r-md)', padding: '10px 12px', marginBottom: 14,
         fontSize: 12, color: 'var(--text-2)', lineHeight: 1.5,
       }}>
-        🧹 <strong style={{ color: 'var(--gold-bright)' }}>Esse chat zera todo dia.</strong> Zoa, provoca, comemora — só sem palavrão pesado e sem brigas de verdade. É bolão entre amigos!
+         <strong style={{ color: 'var(--gold-bright)' }}>Esse chat zera todo dia.</strong> Zoa, provoca, comemora — só sem palavrão pesado e sem brigas de verdade. É bolão entre amigos!
       </div>
 
       {/* Lista de mensagens */}
@@ -201,7 +201,7 @@ export default function ChatPage() {
           ))
         ) : messages.length === 0 ? (
           <div style={{ textAlign: 'center', color: 'var(--text-3)', padding: '60px 0', fontSize: 13 }}>
-            Nenhuma mensagem ainda. Seja o primeiro a zoar! 😄
+            Nenhuma mensagem ainda. Seja o primeiro a zoar! 
           </div>
         ) : (
           messages.map(msg => (
