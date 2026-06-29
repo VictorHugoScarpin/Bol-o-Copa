@@ -161,7 +161,7 @@ function ScoredGuesses({ userId, tournamentPoints }) {
       )}
 
       {knockout.length > 0 && (
-        <CollapseSection label="Mata-Mata" count={knockout.length} pts={calcPts(knockout) + (tournamentPoints > 0 ? tournamentPoints : 0)} accentColor="#60a5fa" defaultOpen>
+        <CollapseSection label="Mata-Mata" count={knockout.length} pts={calcPts(knockout) + (tournamentPoints > 0 ? tournamentPoints : 0)} accentColor="var(--gold)" defaultOpen>
           {knockout.map((g, i) => <GuessItem key={i} g={g} />)}
           {tournamentPoints > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 10px', borderRadius: '8px', background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)', marginTop: '2px' }}>
