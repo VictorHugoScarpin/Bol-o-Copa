@@ -501,9 +501,6 @@ async function syncMatches() {
   for (const m of (existingMatches || [])) {
     existingStatusMap[m.external_id] = m.status
     existingQualifierMap[m.external_id] = m.qualifier_result
-    if (match.score?.penalties?.home != null) {
-  console.log(`🔍 PEN [${match.homeTeam.name} x ${match.awayTeam.name}]`, JSON.stringify(match.score, null, 2))
-    }
   }
 
   let salvos = 0, pulados = 0, erros = 0
@@ -534,11 +531,6 @@ async function syncMatches() {
     // Placar exibido = regularTime + extraTime (se houver ET), senão só regularTime, senão fullTime
     const finalHome = rtHome != null ? rtHome + (etHome ?? 0) : ftHome
     const finalAway = rtAway != null ? rtAway + (etAway ?? 0) : ftAway
-
-    // DEBUG: log de jogos com pênaltis
-    if (match.score?.penalties?.home != null) {
-      console.log(`🔍 PEN [${match.homeTeam.name} x ${match.awayTeam.name}] score:`, JSON.stringify(match.score))
-    }
 
     let qualifierResult = null
     if (status === 'finished' && new Date(match.utcDate) >= KNOCKOUT_START) {
