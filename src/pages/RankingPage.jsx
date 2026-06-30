@@ -301,24 +301,20 @@ const COLS_FULL  = `28px 1fr ${COL} ${COL} ${COL} ${COL} ${COL} ${COL}`
 const COLS_GROUP = `28px 1fr ${COL} ${COL} ${COL} ${COL}`
 const hStyle = { fontSize: '10px', fontWeight: 700, color: 'var(--text-3)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.08em' }
 
-// Sub-navegação Geral / Fase de Grupos / Mata-mata
+// Sub-navegação Geral / Fase de Grupos / Mata-mata (estilo nav secundária, igual Hoje/Todos/Amanhã)
 function PhaseNav({ phase, onChange }) {
   const opts = [['geral', 'Geral'], ['grupos', 'Fase de Grupos'], ['mata', 'Mata-mata']]
   return (
-    <div style={{ display: 'flex', background: 'var(--surface)', borderRadius: 'var(--r-md)', padding: '4px', marginBottom: '14px', gap: '4px' }}>
+    <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '14px' }}>
       {opts.map(([key, label]) => (
-        <button
-          key={key}
-          onClick={() => onChange(key)}
-          style={{
-            flex: 1, padding: '8px 4px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-            fontFamily: 'var(--font-body)', fontSize: '12px', fontWeight: 600, transition: 'all 0.2s',
-            background: phase === key ? 'rgba(255,255,255,0.1)' : 'transparent',
-            color: phase === key ? 'var(--text)' : 'var(--text-3)',
-          }}
-        >
-          {label}
-        </button>
+        <button key={key} onClick={() => onChange(key)} style={{
+          flex: 1, padding: '9px 8px', border: 'none', cursor: 'pointer',
+          fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600,
+          background: 'transparent',
+          color: phase === key ? 'var(--text)' : 'var(--text-3)',
+          borderBottom: `2px solid ${phase === key ? 'var(--gold)' : 'transparent'}`,
+          transition: 'all 0.2s',
+        }}>{label}</button>
       ))}
     </div>
   )
