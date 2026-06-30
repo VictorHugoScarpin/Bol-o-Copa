@@ -59,6 +59,52 @@ const FLAG_MAP = {
   'DR Congo':'🇨🇩','Congo DR':'🇨🇩',
 }
 
+
+// Busca placar de pênaltis na API-Football (RapidAPI) pelo nome dos times e data
+const rapidPenCache = {}
+async function fetchRapidPenalties(homeTeam, awayTeam, utcDate) {
+  if (!RAPIDAPI_KEY) return null
+  const cacheKey = homeTeam + utcDate.slice(0, 10)
+  if (rapidPenCache[cacheKey] !== undefined) return rapidPenCache[cacheKey]
+
+  try {
+    const date = utcDate.slice(0, 10)
+    const url = `https://api-football-v1.p.rapidapi.com/v3/fixtures?date=${date}&season=2026&league=1`
+    const res = await fetch(url, {
+      headers: {
+        'x-rapidapi-key': RAPIDAPI_KEY,
+        'x-rapidapi-host': 'api-football-v1.p.rapidapi.com',
+      }
+    })
+    if (!res.ok) { rapidPenCache[cacheKey] = null; return null }
+    const json = await res.json()
+    const fixtures = json.response || []
+
+    // Procura o jogo pelo nome dos times
+    const fix = fixtures.find(f => {
+      const h = f.teams?.home?.name || ''
+      const a = f.teams?.away?.name || ''
+      return (h.includes(homeTeam.split(' ')[0]) || homeTeam.includes(h.split(' ')[0])) &&
+             (a.includes(awayTeam.split(' ')[0]) || awayTeam.includes(a.split(' ')[0]))
+    })
+
+    if (!fix) { rapidPenCache[cacheKey] = null; return null }
+
+    const penHome = fix.score?.penalty?.home
+    const penAway = fix.score?.penalty?.away
+    if (penHome == null || penAway == null) { rapidPenCache[cacheKey] = null; return null }
+
+    const result = { penHome, penAway }
+    console.log(`  🎯 RapidAPI pênaltis [${homeTeam} x ${awayTeam}]: ${penHome}x${penAway}`)
+    rapidPenCache[cacheKey] = result
+    return result
+  } catch (e) {
+    console.error('  ⚠️ RapidAPI error:', e.message)
+    rapidPenCache[cacheKey] = null
+    return null
+  }
+}
+
 async function apiRequest(endpoint) {
   const res = await fetch(`https://api.football-data.org/v4${endpoint}`, {
     headers: { 'X-Auth-Token': FOOTBALL_API_KEY },
@@ -515,24 +561,27 @@ async function syncMatches() {
     const statusAntes = existingStatusMap[externalId] // status que estava no banco
     const qualifierAntes = existingQualifierMap[externalId] // qualifier_result que estava no banco
 
-    // A API retorna:
-    // regularTime = placar após 90min (o que queremos mostrar)
-    // extraTime   = gols SÓ na prorrogação
-    // penalties   = gols SÓ nos pênaltis (não é acumulado)
-    // fullTime    = placar acumulado total (90+ET+pen) — NÃO usar para exibição
-    const rtHome = match.score?.regularTime?.home
-    const rtAway = match.score?.regularTime?.away
-    const ftHome = match.score?.fullTime?.home
-    const ftAway = match.score?.fullTime?.away
-    const penHome = match.score?.penalties?.home ?? null
-    const penAway = match.score?.penalties?.away ?? null
-
+    const rtHome = match.score?.regularTime?.home ?? null
+    const rtAway = match.score?.regularTime?.away ?? null
+    const ftHome = match.score?.fullTime?.home ?? null
+    const ftAway = match.score?.fullTime?.away ?? null
     const etHome = match.score?.extraTime?.home ?? null
     const etAway = match.score?.extraTime?.away ?? null
 
-    // Placar exibido = regularTime + extraTime (se houver ET), senão só regularTime, senão fullTime
+    // Placar exibido = regularTime + extraTime; se não tiver regularTime usa fullTime
     const finalHome = rtHome != null ? rtHome + (etHome ?? 0) : ftHome
     const finalAway = rtAway != null ? rtAway + (etAway ?? 0) : ftAway
+
+    // Pênaltis: busca na RapidAPI se foi shootout (football-data retorna dado errado)
+    let penHome = null
+    let penAway = null
+    if (status === 'finished' && match.score?.duration === 'PENALTY_SHOOTOUT') {
+      const rapid = await fetchRapidPenalties(match.homeTeam.name, match.awayTeam.name, match.utcDate)
+      if (rapid) {
+        penHome = rapid.penHome
+        penAway = rapid.penAway
+      }
+    }
 
     let qualifierResult = null
     if (status === 'finished' && new Date(match.utcDate) >= KNOCKOUT_START) {
