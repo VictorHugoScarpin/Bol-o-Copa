@@ -213,11 +213,11 @@ function ResenhaList({ matchId, matchHomeScore, matchAwayScore, qualifierResult,
         return (
           <div key={g.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', borderRadius: '6px', background: BG[result], gap: '8px' }}>
             <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.profiles?.display_name}</span>
-            {hasQualifier && g.qualifier_guess && (
+            {isKnockout && g.qualifier_guess && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '2px 7px 2px 4px', borderRadius: '99px', background: 'rgba(59,130,246,0.18)', border: '1px solid rgba(59,130,246,0.35)', flexShrink: 0 }}>
                 {flagUrl && <img src={flagUrl} alt="" style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover' }} />}
                 <span style={{ fontSize: '10px', fontWeight: 600, color: '#93c5fd', maxWidth: '60px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getPT(g.qualifier_guess)}</span>
-                <div style={{ width: 7, height: 7, borderRadius: '50%', background: qualifierAcertou ? '#4ade80' : '#f87171', flexShrink: 0 }} />
+                <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: !qualifierResult ? 'rgba(255,255,255,0.25)' : qualifierAcertou ? '#4ade80' : '#f87171' }} />
               </div>
             )}
             <span style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: COLOR[result], letterSpacing: '0.06em', flexShrink: 0 }}>{g.home_score} × {g.away_score}</span>
