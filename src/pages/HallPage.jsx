@@ -121,19 +121,37 @@ function BoltIcon()   { return <svg width="18" height="18" viewBox="0 0 24 24" f
 function HandIcon()   { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg> }
 function SkullIcon()  { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M8 20v2h8v-2"/><path d="m12.5 17-.5-1-.5 1h1z"/><path d="M16 20a2 2 0 0 0 1.956-2.4l-1.536-7.68A5 5 0 0 0 7.58 9.92L6.044 17.6A2 2 0 0 0 8 20Z"/></svg> }
 
+const STAGE_ORDER = ['Fase de 32', 'LAST_16', 'LAST_8', 'LAST_4', '3º Lugar', 'Final']
+const STAGE_LABELS = {
+  'Fase de 32': 'Dezesseis-avos',
+  'LAST_16': 'Oitavas de Final',
+  'LAST_8': 'Quartas de Final',
+  'LAST_4': 'Semifinal',
+  '3º Lugar': 'Disputa de 3º Lugar',
+  'Final': 'Final',
+}
+
 export default function HallPage() {
   const [profiles, setProfiles] = useState([])
   const [guesses, setGuesses] = useState([])
+  const [groupStandings, setGroupStandings] = useState([])
+  const [knockoutMatches, setKnockoutMatches] = useState([])
   const [loading, setLoading] = useState(true)
+  const [mainTab, setMainTab] = useState('hall')
+  const [infoTab, setInfoTab] = useState('grupos')
 
   useEffect(() => {
     async function fetchData() {
-      const [{ data: prof }, { data: gues }] = await Promise.all([
+      const [{ data: prof }, { data: gues }, { data: gs }, { data: km }] = await Promise.all([
         supabase.from('profiles').select('*').order('points', { ascending: false }),
         supabase.from('guesses').select('*, matches(status, home_score, away_score)'),
+        supabase.from('group_standings').select('*'),
+        supabase.from('matches').select('*').in('stage', STAGE_ORDER).order('match_date', { ascending: true }),
       ])
       setProfiles(prof || [])
       setGuesses(gues || [])
+      setGroupStandings(gs || [])
+      setKnockoutMatches(km || [])
       setLoading(false)
     }
     fetchData()
@@ -216,6 +234,29 @@ export default function HallPage() {
     return { ...p, _value: zeros }
   }).sort((a, b) => b._value - a._value)
 
+  // ── FASE DE GRUPOS ──────────────────────────────────────────────────────
+  const groupsMap = {}
+  groupStandings.forEach(row => {
+    if (!groupsMap[row.group_name]) groupsMap[row.group_name] = []
+    groupsMap[row.group_name].push(row)
+  })
+  const groupNames = Object.keys(groupsMap).sort()
+  const sortTeams = (a, b) => (b.points ?? 0) - (a.points ?? 0) || (b.goal_diff ?? 0) - (a.goal_diff ?? 0) || (b.goals_for ?? 0) - (a.goals_for ?? 0)
+  groupNames.forEach(gn => groupsMap[gn].sort(sortTeams))
+
+  const thirdPlaced = groupNames
+    .map(gn => groupsMap[gn][2])
+    .filter(Boolean)
+    .sort(sortTeams)
+
+  // ── MATA-MATA ────────────────────────────────────────────────────────────
+  const byStage = {}
+  knockoutMatches.forEach(m => {
+    if (!STAGE_ORDER.includes(m.stage)) return
+    if (!byStage[m.stage]) byStage[m.stage] = []
+    byStage[m.stage].push(m)
+  })
+
   const stats = [
     { icon: '🔥', title: 'EM CHAMAS', subtitle: 'Maior sequência de acertos consecutivos', data: emChamas, unit: 'seguidos', color: '#f97316' },
     { icon: '🎯', title: 'PÉ QUENTE', subtitle: 'Mais placares exatos', data: peQuente, unit: 'exatos', color: '#f5c518' },
@@ -229,27 +270,270 @@ export default function HallPage() {
   return (
     <div className="page">
       <div className="section-title">Hall da Fama</div>
-      <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 20, lineHeight: 1.5 }}>
-        Estatísticas da galera baseadas nos palpites do bolão.
+
+      <div style={{ display: 'flex', gap: 20, borderBottom: '1px solid var(--border)', marginBottom: 18 }}>
+        <TabButton active={mainTab === 'hall'} onClick={() => setMainTab('hall')}>Hall</TabButton>
+        <TabButton active={mainTab === 'info'} onClick={() => setMainTab('info')}>Informações</TabButton>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {stats.map(({ icon, title, subtitle, data, unit, color }) => (
-          <StatCard
-            key={title}
-            icon={icon}
-            title={title}
-            subtitle={subtitle}
-            player={data[0]?._value > 0 ? data[0] : null}
-            value={data[0]?._value ?? '-'}
-            unit={unit}
-            color={color}
-            rank={data.filter(p => p._value > 0)}
-          />
-        ))}
-      </div>
+      {mainTab === 'hall' && (
+        <>
+          <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 20, lineHeight: 1.5 }}>
+            Estatísticas da galera baseadas nos palpites do bolão.
+          </div>
 
-      <ComoFunciona />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {stats.map(({ icon, title, subtitle, data, unit, color }) => (
+              <StatCard
+                key={title}
+                icon={icon}
+                title={title}
+                subtitle={subtitle}
+                player={data[0]?._value > 0 ? data[0] : null}
+                value={data[0]?._value ?? '-'}
+                unit={unit}
+                color={color}
+                rank={data.filter(p => p._value > 0)}
+              />
+            ))}
+          </div>
+
+          <ComoFunciona />
+        </>
+      )}
+
+      {mainTab === 'info' && (
+        <>
+          <div style={{ display: 'flex', gap: 18, borderBottom: '1px solid var(--border)', marginBottom: 16 }}>
+            <TabButton small active={infoTab === 'grupos'} onClick={() => setInfoTab('grupos')}>Fase de Grupos</TabButton>
+            <TabButton small active={infoTab === 'matamata'} onClick={() => setInfoTab('matamata')}>Mata-Mata</TabButton>
+          </div>
+
+          {infoTab === 'grupos' && (
+            groupNames.length === 0 ? (
+              <div className="glass-card" style={{ padding: 24, textAlign: 'center', color: 'var(--text-3)', fontSize: 12 }}>
+                Classificação dos grupos ainda não disponível.
+              </div>
+            ) : (
+              <>
+                {groupNames.map(gn => (
+                  <GroupTable key={gn} groupName={gn} teams={groupsMap[gn]} />
+                ))}
+                {thirdPlaced.length > 0 && <ThirdPlacedTable teams={thirdPlaced} />}
+              </>
+            )
+          )}
+
+          {infoTab === 'matamata' && <MataMataView byStage={byStage} />}
+        </>
+      )}
+    </div>
+  )
+}
+
+// ── TABS / FASE DE GRUPOS / MATA-MATA ──────────────────────────────────────
+
+function TabButton({ active, onClick, children, small }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        padding: small ? '6px 2px 10px' : '4px 2px 12px',
+        fontFamily: 'var(--font-display)',
+        fontSize: small ? 12 : 14,
+        letterSpacing: '0.06em',
+        color: active ? 'var(--gold, #f5c518)' : 'var(--text-3)',
+        borderBottom: active ? '2px solid var(--gold, #f5c518)' : '2px solid transparent',
+        transition: 'color 0.15s, border-color 0.15s',
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+const tableTh = { padding: '4px 6px', textAlign: 'center' }
+const tableTd = { padding: '6px 6px', textAlign: 'center', color: 'var(--text-2)' }
+
+function GroupTable({ groupName, teams }) {
+  return (
+    <div className="glass-card" style={{ padding: '14px', marginBottom: 12 }}>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 14, letterSpacing: '0.06em', color: 'var(--text)', marginBottom: 10 }}>
+        {groupName}
+      </div>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, minWidth: 420 }}>
+          <thead>
+            <tr style={{ color: 'var(--text-3)', textTransform: 'uppercase', fontSize: 9, letterSpacing: '0.05em' }}>
+              <th style={{ ...tableTh, textAlign: 'left' }}>#</th>
+              <th style={{ ...tableTh, textAlign: 'left' }}>Seleção</th>
+              <th style={tableTh}>PTS</th>
+              <th style={tableTh}>V</th>
+              <th style={tableTh}>E</th>
+              <th style={tableTh}>D</th>
+              <th style={tableTh}>GM</th>
+              <th style={tableTh}>GC</th>
+              <th style={tableTh}>SG</th>
+            </tr>
+          </thead>
+          <tbody>
+            {teams.map((t, i) => (
+              <tr
+                key={t.id}
+                style={{
+                  background: i < 2 ? 'rgba(0,200,83,0.07)' : i === 2 ? 'rgba(77,142,240,0.07)' : 'rgba(240,62,62,0.05)',
+                  borderTop: '1px solid var(--border)',
+                }}
+              >
+                <td style={{ ...tableTd, textAlign: 'left', color: 'var(--text-3)' }}>{i + 1}º</td>
+                <td style={{ ...tableTd, textAlign: 'left', fontWeight: 600, color: 'var(--text)' }}>
+                  <span style={{ marginRight: 6 }}>{t.flag_emoji || '🏳️'}</span>{t.team_name}
+                </td>
+                <td style={{ ...tableTd, fontWeight: 700, color: 'var(--gold, #f5c518)' }}>{t.points ?? 0}</td>
+                <td style={tableTd}>{t.won ?? 0}</td>
+                <td style={tableTd}>{t.drawn ?? 0}</td>
+                <td style={tableTd}>{t.lost ?? 0}</td>
+                <td style={tableTd}>{t.goals_for ?? 0}</td>
+                <td style={tableTd}>{t.goals_against ?? 0}</td>
+                <td style={tableTd}>{t.goal_diff ?? 0}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div style={{ display: 'flex', gap: 10, marginTop: 10, fontSize: 9, color: 'var(--text-3)', flexWrap: 'wrap' }}>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: '#00c853', marginRight: 4 }} />Classificado</span>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: '#4d8ef0', marginRight: 4 }} />Aguarda repescagem</span>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: '#f03e3e', marginRight: 4 }} />Eliminado</span>
+      </div>
+    </div>
+  )
+}
+
+function ThirdPlacedTable({ teams }) {
+  return (
+    <div className="glass-card" style={{ padding: '14px', marginTop: 8 }}>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 14, letterSpacing: '0.06em', color: 'var(--text)', marginBottom: 2 }}>
+        Melhores Terceiros
+      </div>
+      <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 10 }}>
+        Os 8 melhores 3ºs colocados avançam ao mata-mata
+      </div>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, minWidth: 460 }}>
+          <thead>
+            <tr style={{ color: 'var(--text-3)', textTransform: 'uppercase', fontSize: 9, letterSpacing: '0.05em' }}>
+              <th style={{ ...tableTh, textAlign: 'left' }}>#</th>
+              <th style={tableTh}>Grupo</th>
+              <th style={{ ...tableTh, textAlign: 'left' }}>Seleção</th>
+              <th style={tableTh}>PTS</th>
+              <th style={tableTh}>V</th>
+              <th style={tableTh}>E</th>
+              <th style={tableTh}>D</th>
+              <th style={tableTh}>GM</th>
+              <th style={tableTh}>GC</th>
+              <th style={tableTh}>SG</th>
+            </tr>
+          </thead>
+          <tbody>
+            {teams.map((t, i) => (
+              <tr
+                key={t.id}
+                style={{
+                  background: i < 8 ? 'rgba(0,200,83,0.07)' : 'rgba(240,62,62,0.05)',
+                  borderTop: i === 8 ? '2px dashed var(--border-strong)' : '1px solid var(--border)',
+                }}
+              >
+                <td style={{ ...tableTd, textAlign: 'left', color: 'var(--text-3)' }}>{i + 1}º</td>
+                <td style={{ ...tableTd, color: 'var(--text-3)' }}>{(t.group_name || '').replace('Grupo ', '')}</td>
+                <td style={{ ...tableTd, textAlign: 'left', fontWeight: 600, color: 'var(--text)' }}>
+                  <span style={{ marginRight: 6 }}>{t.flag_emoji || '🏳️'}</span>{t.team_name}
+                </td>
+                <td style={{ ...tableTd, fontWeight: 700, color: 'var(--gold, #f5c518)' }}>{t.points ?? 0}</td>
+                <td style={tableTd}>{t.won ?? 0}</td>
+                <td style={tableTd}>{t.drawn ?? 0}</td>
+                <td style={tableTd}>{t.lost ?? 0}</td>
+                <td style={tableTd}>{t.goals_for ?? 0}</td>
+                <td style={tableTd}>{t.goals_against ?? 0}</td>
+                <td style={tableTd}>{t.goal_diff ?? 0}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function MataMataView({ byStage }) {
+  const stagesPresent = STAGE_ORDER.filter(s => byStage[s]?.length)
+
+  if (stagesPresent.length === 0) {
+    return (
+      <div className="glass-card" style={{ padding: 24, textAlign: 'center', color: 'var(--text-3)', fontSize: 12 }}>
+        O chaveamento do mata-mata ainda não começou.
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8 }}>
+      {stagesPresent.map(stage => (
+        <div key={stage} style={{ minWidth: 190, flexShrink: 0 }}>
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: 'var(--gold, #f5c518)', textTransform: 'uppercase',
+            letterSpacing: '0.06em', marginBottom: 8, textAlign: 'center',
+          }}>
+            {STAGE_LABELS[stage] || stage}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {byStage[stage].map(m => <BracketMatch key={m.id} match={m} />)}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function BracketMatch({ match }) {
+  const finished = match.status === 'finished'
+  const hasPen = match.penalty_home != null && match.penalty_away != null
+  const homeWin = finished && (hasPen ? match.penalty_home > match.penalty_away : match.home_score > match.away_score)
+  const awayWin = finished && (hasPen ? match.penalty_away > match.penalty_home : match.away_score > match.home_score)
+
+  return (
+    <div className="glass-card" style={{ padding: '10px 12px' }}>
+      <BracketRow team={match.home_team} flag={match.home_flag} score={match.home_score} pen={match.penalty_home} winner={homeWin} finished={finished} />
+      <div style={{ height: 1, background: 'var(--border)', margin: '6px 0' }} />
+      <BracketRow team={match.away_team} flag={match.away_flag} score={match.away_score} pen={match.penalty_away} winner={awayWin} finished={finished} />
+      {!finished && match.match_date && (
+        <div style={{ fontSize: 9, color: 'var(--text-3)', textAlign: 'center', marginTop: 6 }}>
+          {new Date(match.match_date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} • {new Date(match.match_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function BracketRow({ team, flag, score, pen, winner, finished }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span style={{ fontSize: 14, flexShrink: 0 }}>{flag || '🏳️'}</span>
+      <span style={{
+        flex: 1, fontSize: 11, fontWeight: winner ? 700 : 500,
+        color: winner ? 'var(--text)' : 'var(--text-3)',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+      }}>
+        {team || 'A definir'}
+      </span>
+      {finished && (
+        <span style={{ fontSize: 12, fontWeight: 700, color: winner ? 'var(--gold, #f5c518)' : 'var(--text-3)', flexShrink: 0 }}>
+          {score ?? '-'}{pen != null ? ` (${pen})` : ''}
+        </span>
+      )}
     </div>
   )
 }
